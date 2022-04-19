@@ -2,9 +2,6 @@
 .include "Imagens/Menu.data"
 .include "Imagens/Seta.data"
 
-
-
-
 .text
 
 MENU:		li t1,0xFF000000	

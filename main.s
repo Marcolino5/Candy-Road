@@ -1,6 +1,10 @@
 .data
+.include "Imagens\Menu.s"
+
 ### TILES ###
+.include "Imagens\TileM.s"
 .include "Imagens\Tile1.s"
+.include "Imagens\Seta.s"
 
 ### MAPAS ###
 .include "Imagens\Mapa1.s"
@@ -10,6 +14,76 @@
 .include "Imagens\CarroV0.data"
 
 .text
+MENU:
+	la a0, Menu
+	call PRINT           # Printa o Menu
+	li s10, 0xFF00CC28  # Endereço de início da impressão
+	li s11, 0xFF00DDBC  # Endereço final
+	SETA:
+		la s5, Seta
+		li a4, 20           # Largura da seta
+
+		add s6, s10, zero
+		add a2, s11, zero
+		call printUND     # Printa a seta
+	
+		li t1, 87         # Código ASCII do W
+		li t2, 119	  # Código ASCII do w
+ 		li t3, 83         # Código ASCII do S
+		li t4, 115        # Código ASCII do s
+		li a1, 32         # Código ASCII do espaço
+		
+		li t5, 0xFF200000 # Carrega endereço do KDMMIO
+		lw t0, 4(t5)      # Lê código ASCII da tecla
+		sw t0, 12(t5)     # Põe no display
+		sw zero, 4(t5)    # Limpa o código ASCII 
+		
+		beq t0, t1, SETAU # Se aperta em W sobe a seta
+		beq t0, t2, SETAU
+		
+		beq t0, t3, SETAD # Se aperta em S desce a seta
+		beq t0, t4, SETAD
+		
+		li t1, 0xFF00CC28
+		beq s10, t1, goMAPA1
+		j SETA # Se não tiver apertado, volta p/ SETA
+		
+	goMAPA1:beq t0, a1, MAPA1
+		
+		j SETA # Se não tiver apertado, volta p/ SETA
+	SETAU:  
+		li t1, 0xFF00CC28
+		beq s10, t1, SETA
+		
+		add s6, s10, zero
+		add a2, s11, zero
+		la s5, TileM
+		call printUND
+		
+		li t6, -9600
+		add s10, s10, t6
+		add s11, s11, t6
+		j SETA
+	SETAD:
+		li t1, 0xFF00F1A8
+		beq s10, t1, SETA
+		
+		add s6, s10, zero
+		add a2, s11, zero
+		la s5, TileM
+		call printUND
+		
+		li t6, 9600
+		add s10, s10, t6
+		add s11, s11, t6
+		j SETA
+	
+	
+	li a7, 10
+	ecall
+
+
+
 MAPA1:
 	li s10, 0xFF00FE30       	# Define inicio p/ MoveCARRO - NÃO USAR REGISTRADOR EM OUTRAS PARTES
 	li s11, 0xFF010FC0       	# Define fim p/ moveCARRO - NÃO USAR REGISTRADOR EM OUTRAS PARTES 
@@ -59,8 +133,8 @@ printSEQUENCE:
 		call moveCARRO
 		
 		# Move verticalmente
-		li t1, 87          		# Código ASCII do w
-        	li t2, 119        		# Código ASCII do W
+		li t1, 87          		# Código ASCII do W
+        	li t2, 119        		# Código ASCII do w
         	
 	   	li t4, 0xFF200000  		# Carrega endereço do KDMMIO
  		lw t0, 0(t4)
@@ -78,34 +152,34 @@ printSEQUENCE:
 		ret
 
 # Printa imagem com dimensões definidas fora da função
-# >Argumentos: largura (a4) e endereço de onde vai printar (s8 - inicio e a2 - fim)<
+# >Argumentos: largura (a4) e endereço de onde vai printar (s6 - inicio e a2 - fim)<
 # Os únicos registradores que precisam ser salvos após a função são s10 e s11
 printUND:
-	add a5, s8, zero        # Guarda valor do endereço inicial em a5
+	add a5, s6, zero        # Guarda valor do endereço inicial em a5
 	
 	li t5,0                  # Inicializa contador
 	li t6,320                # 320 p/ usar em contas
 	
 	printUND_LOOP1:
-		add t4,a5,zero          # Guarda valor do endereço inicial em t4	
+		add t4,a5,zero           # Guarda valor do endereço inicial em t4	
 		mul t0,t6,t5             # Faz 320 * contador
 		add t4,t4,t0             # Define qual será o próximo endereço
 	
-		add a3,s8,zero           # Guarda valor do endereço inicial em a3
+		add a3,s6,zero           # Guarda valor do endereço inicial em a3
 		add a3,a3,a4             # Soma o endereço inicial à largura
 	
 	printUND_LOOP2:
-		beq s8,a3,printUND_EXIT  # Sai quando tiver printado valor correspondente à largura
+		beq s6,a3,printUND_EXIT  # Sai quando tiver printado valor correspondente à largura
 		lw s2,0(s5)              # Lê 4 pixels
-		sw s2,0(s8)              # Escreve a word na memória
-		addi s8,s8,4             # Soma 4 ao inicial
+		sw s2,0(s6)              # Escreve a word na memória
+		addi s6,s6,4             # Soma 4 ao inicial
 		addi s5,s5,4             # Soma 4 ao endereço da imagem
 		j printUND_LOOP2
 	
 	printUND_EXIT:	
 		addi t5,t5,1            # Adiciona 1 ao contador	
-		add s8,t4,zero          # Coloca o próximo endereço
-		blt s8,a2,printUND_LOOP1 # Faz branch enquanto não alcança o endereço final
+		add s6,t4,zero          # Coloca o próximo endereço
+		blt s6,a2,printUND_LOOP1 # Faz branch enquanto não alcança o endereço final
 		ret
 
 # >Argumentos: posiçao inicial - s10 (inicio) e s11 (fim)
@@ -113,10 +187,10 @@ printUND:
 moveCARRO:
 	mv s4, ra
 	
-	add s8, s10, zero  # Coloca valor armazenado em s10 em s8
+	add s6, s10, zero  # Coloca valor armazenado em s10 em s6
 	add a2, s11, zero  # Coloca valor armazenado em s11 em a2
 	
-	add a3, s8, zero  # Coloca valor armazenado em s8 em a3
+	add a3, s6, zero  # Coloca valor armazenado em s6 em a3
 	
 	la s5, CarroV0
 	li a4, 16         # Define largura da imagem
@@ -125,6 +199,9 @@ moveCARRO:
 	mv ra, s4
 	
 	#Printa p/ a direita quando aperta d/D
+	
+	li t6, 87         # Código ASCII do W
+	li s6, 119        # Código ASCII do w
 	
 	li t1, 68         # Código ASCII do D
 	li t2, 100        # Código ASCII do d
@@ -142,12 +219,15 @@ moveCARRO:
 	beq t0, t3, moveCARROL # Se código ASCII = A/a, vai p/ moveCARROL
 	beq t0, t4, moveCARROL
 	
+	beq t0, t6, CONT       # Se código ASCII = W/w, vai p/ CONT
+	beq t0, s6, CONT
+	
 	ret
 moveCARROR:
 	li t1, 0xFF00FE70
 	beq s10, t1, PRINT_EXIT
 
-	add s8, s10, zero
+	add s6, s10, zero
 	add a2, s11, zero
 	
 	la s5, TILE1
@@ -164,7 +244,7 @@ moveCARROL:
 	li t1, 0xFF00FE18
 	beq s10, t1, PRINT_EXIT
 
-	add s8, s10, zero
+	add s6, s10, zero
 	add a2, s11, zero
 	
 	la s5, TILE1
