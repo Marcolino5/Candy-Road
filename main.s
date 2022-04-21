@@ -1,20 +1,26 @@
+.include "MACROSv21.s"
+
 .data
-.include "Imagens\Menu.s"
+.include "Imagens/Menu.s"
+### MUSICAS ###
+.include "Musicas/MusicaMenu.s"
 
 ### TILES ###
-.include "Imagens\TileM.s"
-.include "Imagens\Tile1.s"
-.include "Imagens\Seta.s"
+.include "Imagens/TileM.s"
+.include "Imagens/Tile1.s"
+.include "Imagens/Seta.s"
 
 ### MAPAS ###
-.include "Imagens\Mapa1.s"
-.include "Imagens\Mapa2.s"
+.include "Imagens/Mapa1.s"
+.include "Imagens/Mapa2.s"
 
 ### CARROS ###
-.include "Imagens\CarroV0.data"
+.include "Imagens/CarroV0.data"
 
 .text
-MENU:
+j MENU
+.include "SYSTEMv21.s"
+MENU:		
 	la a0, Menu
 	call PRINT           # Printa o Menu
 	li s10, 0xFF00CC28  # Endereço de início da impressão
@@ -46,7 +52,7 @@ MENU:
 		
 		li t1, 0xFF00CC28
 		beq s10, t1, goMAPA1
-		j SETA # Se não tiver apertado, volta p/ SETA
+		j SETA # Se não tiver no endereço, volta p/ SETA
 		
 	goMAPA1:beq t0, a1, MAPA1
 		
@@ -77,7 +83,6 @@ MENU:
 		add s10, s10, t6
 		add s11, s11, t6
 		j SETA
-	
 	
 	li a7, 10
 	ecall
@@ -257,3 +262,27 @@ moveCARROL:
 	addi s10, s10, -4
 	addi s11, s11, -4
 	j moveCARRO
+	
+#Testando
+tocamusicaMENU: 
+	la s0,numMENU		
+	lw s1,(s0)		
+	la s0,notasMENU		
+	li t0,0			
+	li a2,99		# instrumento
+	li a3,32		# volume
+
+TOCA:	beq t0,s1, RET
+	lw a0,(s0)		
+	lw a1,4(s0)		
+	li a7,31		
+	ecall			
+	
+	mv a0,a1		
+	li a7,32
+	ecall		
+	
+	addi s0,s0,8	
+	addi t0,t0,1		
+	j TOCA	
+RET:    ret
