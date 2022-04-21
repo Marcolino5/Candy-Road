@@ -4,6 +4,8 @@
 .include "Imagens/Menu.s"
 ### MUSICAS ###
 .include "Musicas/MusicaMenu.s"
+.include "Musicas/Largada1.s"
+.include "Musicas/MusicaLargada1.s"
 
 ### TILES ###
 .include "Imagens/TileM.s"
@@ -19,13 +21,25 @@
 
 .text
 j MENU
-.include "SYSTEMv21.s"
-MENU:		
+.include "SYSTEMv21.s"		
+MENU:						
 	la a0, Menu
-	call PRINT           # Printa o Menu
+	call PRINT          # Printa o Menu
 	li s10, 0xFF00CC28  # Endereço de início da impressão
 	li s11, 0xFF00DDBC  # Endereço final
+menuMUSICA:	
+	#Parte que toca música
+	la s0,notasMENU		# Carrega notas do menu	
+	li s7,0			# Inicia contador de notas
 	SETA:
+		beqz s7, playMUSICA  # Se contador = 0, entra na música direto
+		li a7, 30	     
+		ecall		     # Chama syscall TIME
+		blt a0, s8, setaCONT # Compara os dois tempos
+		addi s0,s0,8	     # Se a0 >= s8, continua a tocar
+	playMUSICA:
+		call tocamusicaMENU
+	setaCONT:
 		la s5, Seta
 		li a4, 20           # Largura da seta
 
@@ -83,17 +97,35 @@ MENU:
 		add s10, s10, t6
 		add s11, s11, t6
 		j SETA
-	
 	li a7, 10
 	ecall
 
-
-
 MAPA1:
 	li s10, 0xFF00FE30       	# Define inicio p/ MoveCARRO - NÃO USAR REGISTRADOR EM OUTRAS PARTES
-	li s11, 0xFF010FC0       	# Define fim p/ moveCARRO - NÃO USAR REGISTRADOR EM OUTRAS PARTES 
+	li s11, 0xFF011100       	# Define fim p/ moveCARRO - NÃO USAR REGISTRADOR EM OUTRAS PARTES 
+	
+	li s6, 0xFF100000		# Define início na Frame 1
+	li a2, 0xFF112C00		# Define final na Frame 1
+	la s5, Mapa1		
+	li a4, 320			# Define largura da imagem
+	call printUND
 	
 	la a0, Mapa1		        # Carrega Mapa1
+	call PRINT                      # Chama a função PRINT
+	
+	add s6, s10, zero  		# Coloca valor armazenado em s10 em s6
+	add a2, s11, zero  		# Coloca valor armazenado em s11 em a2
+	add a3, s6, zero  		# Coloca valor armazenado em s6 em a3
+	la s5, CarroV0
+	li a4, 16        		# Define largura da imagem
+	call printUND
+	
+	li t6, 0                        # Define frame como 0
+	la s0, notasMLARGADA1           # Carrega notas da largada
+	li s7, 0			# Inicia contador de notas
+	call LARGADA                    # Chama a função LARGADA
+	
+	la a0, Mapa1                    # Carrega Mapa1
         li a1, 9                        # Define quantas imagens 320x240 de Mapa1 serão printadas
       	call printSEQUENCE	        # Chama função PRINT-SEQUENCE
       	
@@ -157,12 +189,11 @@ printSEQUENCE:
 		ret
 
 # Printa imagem com dimensões definidas fora da função
-# >Argumentos: largura (a4) e endereço de onde vai printar (s6 - inicio e a2 - fim)<
-# Os únicos registradores que precisam ser salvos após a função são s10 e s11
+# >Argumentos: Largura (a4) e Endereço da impressão (s6 - inicio e a2 - fim)<
 printUND:
 	add a5, s6, zero        # Guarda valor do endereço inicial em a5
 	
-	li t5,0                  # Inicializa contador
+	li t5,1                  # Inicializa contador
 	li t6,320                # 320 p/ usar em contas
 	
 	printUND_LOOP1:
@@ -263,26 +294,100 @@ moveCARROL:
 	addi s11, s11, -4
 	j moveCARRO
 	
-#Testando
-tocamusicaMENU: 
-	la s0,numMENU		
-	lw s1,(s0)		
-	la s0,notasMENU		
-	li t0,0			
-	li a2,99		# instrumento
-	li a3,32		# volume
-
-TOCA:	beq t0,s1, RET
-	lw a0,(s0)		
-	lw a1,4(s0)		
-	li a7,31		
-	ecall			
+# Toca música sem pausar o jogo
+# >Argumentos: s1 (n de notas), s0 (endereço), s7 (n de notas já tocado), a3 (Volume)<
+tocamusicaMENU:
+	mv t2, ra
+	la t0,numMENU	        # Coloca n de notas em s1	
+	lw s1,(t0)	
+	li a2,2  		# Instrumento
+	li a3,42                # Volume
+	tocaMENU:	
+		beq s7,s1,menuMUSICA	# Se tiver tocado todas as notas, volta p/ MENU
+		lw a0,(s0)		# Coloca nota em a0
+		lw a1,4(s0)		# Coloca duração em a1
+		li a7,31	
+		ecall			# Toca a nota
+		addi s7,s7,1		# Adiciona um ao contador de notas	
 	
-	mv a0,a1		
-	li a7,32
-	ecall		
-	
-	addi s0,s0,8	
-	addi t0,t0,1		
-	j TOCA	
-RET:    ret
+		li a7, 30		# Pega quando tocou a nota
+		ecall
+		add s8,a0,a1		# Define quando vai tocar de novo
+		addi s8,s8,-210
+		
+		mv ra, t2
+		ret
+# Toca a primeira música e um som 4 vezes pausadamente, sendo a largada da corrida
+# >Argumentos: s0 (Notas da Largada) e s7 (Contador de Notas)<
+LARGADA:
+	mv t2, ra
+	largadaMUSICA:
+		la t0, numMLARGADA1	# Coloca n de notas em s1
+		lw s1,(t0)
+		li a2, 2		# Instrumento
+		li a3, 42		# Volume
+		loopMLARGADA:
+			beq s7, s1,fimLARGADA	# Se tiver tocado todas as notas, vai p/ o final
+			lw a0,(s0)		# Coloca nota em a0
+			lw a1,4(s0)		# Coloca duração em a1
+			li a7, 31
+			ecall			# Toca a nota
+			addi s7,s7,1		# Adiciona um ao contador de nota
+			
+			mv a0,a1		# Coloca duração em a0
+			li a7,32
+			ecall			# Realiza Sleep (pausa)
+			
+			addi s0,s0,8		# Passa o endereço p/ a próxima nota
+			j loopMLARGADA
+	fimLARGADA:
+		la s0,notasLARGADA1 # Carrega notas da largada
+		li s7,0	   	    # Inicia contador
+		la t0,numLARGADA1   # Carrega n de notas
+		lw s1,(t0)
+		li a2, 2	    # Instrumento
+		li a3, 0	    # Volume
+		loopLARGADA:
+			addi t3, s1, -1		   # Tira 1 do n de notas
+			beq s7, t3, maisvolLARGADA # Se estiver na última nota, aumenta mais o volume
+			bnez s7, mvolLARGADA	   # Se não estiver na primeira nota, aumenta o volume
+		contloopLARGADA:
+			beq s7,s1, retLARGADA	# Se tiver tocado todas as notas, vai p/ retLARGADA
+			lw a0,(s0)		# Coloca a nota em a0
+			lw a1,4(s0)		# Coloca a duração em a1
+			li a7,31
+			ecall			# Toca a nota
+			addi s7,s7,1		# Adiciona um ao contador de nota
+			
+			xori t6, t6, 1		# Faz xori para alternar os valores
+			li a0,0xFF200604
+			sw t6,0(a0)
+			
+			li t5, 2                # Coloca 2 p/ usar em contas
+			mv a0,a1		# Coloca a duração em a0
+			div a0,a0,t5		# Divide a duração por dois
+			
+			li a7,32
+			ecall			# Realiza sleep(Pausa)
+			
+			xori t6, t6, 1		# Faz xori para alternar os valores
+			li a0,0xFF200604
+			sw t6,0(a0)
+			
+			mv a0,a1		# Coloca a duração em a0
+			div a0,a0,t5		# Divide a duração por dois
+			
+			li a7,32
+			ecall			# Realiza sleep(Pausa)
+			
+			addi s0,s0,8
+			j loopLARGADA
+	retLARGADA:
+		mv ra,t2
+		ret
+	mvolLARGADA:
+		li a3,70
+		j contloopLARGADA
+	maisvolLARGADA:
+		li a3,100
+		j contloopLARGADA
