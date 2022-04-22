@@ -2,8 +2,13 @@
 Projeto de ISC 
 
 Como Jogar:
-Espaço - Confirmar opção
 
+Menu:
+Espaço - Confirmar opção
+W - Cima
+S - Baixo
+
+Fases:
 W - Acelera
 A - Esquerda
 D - Direita

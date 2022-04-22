@@ -1,7 +1,13 @@
-.include "MACROSv21.s"
-
 .data
 .include "Imagens/Menu.s"
+
+### INTERFACE ###
+.include "Imagens/Acelerador1.s"
+.include "Imagens/Acelerador2.s"
+.include "Imagens/Acelerador3.s"
+
+.include "Imagens/Fuel.s"
+
 ### MUSICAS ###
 .include "Musicas/MusicaMenu.s"
 .include "Musicas/Largada1.s"
@@ -13,20 +19,23 @@
 .include "Imagens/Seta.s"
 
 ### MAPAS ###
+.include "Imagens/Mapa1Og.s"
 .include "Imagens/Mapa1.s"
 .include "Imagens/Mapa2.s"
 
 ### CARROS ###
 .include "Imagens/CarroV0.data"
 
+TEMPOACELERADOR: .word 0x00000000
+PONTUAÇÃO: .word 0x00000000
+GASOLINA: .word 0x00000000
+
 .text
-j MENU
-.include "SYSTEMv21.s"		
+j MENU	
 MENU:						
 	la a0, Menu
 	call PRINT          # Printa o Menu
 	li s10, 0xFF00CC28  # Endereço de início da impressão
-	li s11, 0xFF00DDBC  # Endereço final
 menuMUSICA:	
 	#Parte que toca música
 	la s0,notasMENU		# Carrega notas do menu	
@@ -40,11 +49,12 @@ menuMUSICA:
 	playMUSICA:
 		call tocamusicaMENU
 	setaCONT:
-		la s5, Seta
+		la a1, Seta
 		li a4, 20           # Largura da seta
+		li a6, 16	    # Altura da seta
 
-		add s6, s10, zero
-		add a2, s11, zero
+		add t2, s10, zero
+		
 		call printUND     # Printa a seta
 	
 		li t1, 87         # Código ASCII do W
@@ -75,49 +85,75 @@ menuMUSICA:
 		li t1, 0xFF00CC28
 		beq s10, t1, SETA
 		
-		add s6, s10, zero
-		add a2, s11, zero
-		la s5, TileM
+		add t2, s10, zero
+		la a1, TileM
+		li a4, 20
+		li a6, 16
 		call printUND
 		
 		li t6, -9600
 		add s10, s10, t6
-		add s11, s11, t6
 		j SETA
 	SETAD:
 		li t1, 0xFF00F1A8
 		beq s10, t1, SETA
 		
-		add s6, s10, zero
-		add a2, s11, zero
-		la s5, TileM
+		add t2, s10, zero
+		la a1, TileM
+		li a4, 20
+		li a6, 16
 		call printUND
 		
 		li t6, 9600
 		add s10, s10, t6
-		add s11, s11, t6
 		j SETA
 	li a7, 10
 	ecall
 
 MAPA1:
 	li s10, 0xFF00FE30       	# Define inicio p/ MoveCARRO - NÃO USAR REGISTRADOR EM OUTRAS PARTES
-	li s11, 0xFF011100       	# Define fim p/ moveCARRO - NÃO USAR REGISTRADOR EM OUTRAS PARTES 
+	li s11, 0                       # Contador da aceleração - NÃO USAR REGISTRADOR EM OUTRAS PARTES
 	
-	li s6, 0xFF100000		# Define início na Frame 1
-	li a2, 0xFF112C00		# Define final na Frame 1
-	la s5, Mapa1		
+	li t2, 0xFF100000		# Define início na Frame 1
+	la a1, Mapa1Og		
 	li a4, 320			# Define largura da imagem
+	li a6, 240			# Define altura da imagem
 	call printUND
 	
-	la a0, Mapa1		        # Carrega Mapa1
+	li t2, 0xFF106A08
+	la a1, Acelerador1
+	li a4, 40			# Define largura da imagem
+	li a6, 24			# Define altura da imagem
+	call printUND
+	
+	li t2, 0xFF10D948
+	la a1, Fuel
+	li a4, 24			# Define largura da imagem
+	li a6, 40			# Define altura da imagem
+	call printUND
+	
+	li s9, 0xFF10D948               # Define inicio p/ GASOLINA - NÃO USAR REGISTRADOR EM OUTRAS PARTES 
+	
+	la a0, Mapa1Og		        # Carrega Mapa1
 	call PRINT                      # Chama a função PRINT
 	
-	add s6, s10, zero  		# Coloca valor armazenado em s10 em s6
-	add a2, s11, zero  		# Coloca valor armazenado em s11 em a2
-	add a3, s6, zero  		# Coloca valor armazenado em s6 em a3
-	la s5, CarroV0
+	add t2, s10, zero  		# Coloca valor armazenado em s10 em t2
+	add a3, t2, zero  		# Coloca valor armazenado em t2 em a3
+	la a1, CarroV0
 	li a4, 16        		# Define largura da imagem
+	li a6, 16			# Define altura da imagem
+	call printUND
+	
+	li t2, 0xFF006A08
+	la a1, Acelerador1
+	li a4, 40			# Define largura da imagem
+	li a6, 24			# Define altura da imagem
+	call printUND
+	
+	li t2, 0xFF00D948
+	la a1, Fuel
+	li a4, 24			# Define largura da imagem
+	li a6, 40			# Define altura da imagem
 	call printUND
 	
 	li t6, 0                        # Define frame como 0
@@ -125,19 +161,18 @@ MAPA1:
 	li s7, 0			# Inicia contador de notas
 	call LARGADA                    # Chama a função LARGADA
 	
-	la a0, Mapa1                    # Carrega Mapa1
-        li a1, 9                        # Define quantas imagens 320x240 de Mapa1 serão printadas
+	la s3, Mapa1                    # Carrega Mapa1
+        li s4, 9                        # Define quantas imagens 320x240 de Mapa1 serão printadas
       	call printSEQUENCE	        # Chama função PRINT-SEQUENCE
       	
 	li s8, 2                        # Define quantas vezes o loop será chamado
-	li s7, 0                        # Inicializa contador
   	MAPA1.2_LOOP:
-      		la a0, Mapa2            # Carrega Mapa2
-      		li a1, 8        
+      		la s3, Mapa2            # Carrega Mapa2
+      		li s4, 8    		# Define quantas imagens 320x240 de Mapa2 serão printadas 
       		call printSEQUENCE
       		
-      		addi s7, s7, 1
-      		bne s7, s8, MAPA1.2_LOOP
+      		addi s8, s8, -1
+      		bnez s8, MAPA1.2_LOOP
       		
       	li a7, 10
       	ecall
@@ -161,137 +196,163 @@ PRINT:
 # >Argumentos: a1 (n de imagens)<
 printSEQUENCE: 
 	mv s0, ra                               # Salva endereço de retorno
-	li s1, 0			        # Inicializa contador
 			
 	printSEQUENCE_LOOP:
-		call PRINT                      # Printa a imagem no endereço atual, que sai no processo +76800 (320 x 240)
-		addi s1, s1, 1                  # Atualiza n de vzs que printou
-	MOVE:	
-		call moveCARRO
+		li t2,0xFF00001C
+		li a4,216
+		li a6,240
+		mv a1,s3
+		call printUND			# Printa a imagem no endereço atual, que sai no processo +76800 (320 x 240)
+		mv s3,a1
+	MOVE:
+		attACELERACAO:
+			beqz s11,ACELERADOR1
+			li t1,1
+			beq s11,t1,ACELERADOR2
+			bgt s11,t1,ACELERADOR3
+		moveCONT1:
+			call moveCARRO
+		moveCONT2:
+			# Move verticalmente
+	   		li t4, 0xFF200000  		# Carrega endereço do KDMMIO
+			lw t0, 4(t4)	   		# lê codigo ASCII da tecla
+			sw t0, 12(t4)      		# põe no display
+			sw zero, 4(t4)    		# Limpa o código ASCII
 		
-		# Move verticalmente
-		li t1, 87          		# Código ASCII do W
-        	li t2, 119        		# Código ASCII do w
-        	
-	   	li t4, 0xFF200000  		# Carrega endereço do KDMMIO
- 		lw t0, 0(t4)
-		andi t0, t0, 1	  		# Coloca em t0 o bit menos significativo p/ comparação
-		beq t0, zero, MOVE 		# Se não pressionar tecla, vai p/ MOVE
-		lw t0, 4(t4)	   		# lê codigo ASCII da tecla
-		sw t0, 12(t4)      		# põe no display
-	
-		beq t0, t1, CONT  		# Se código == w, pula e continua
-		bne t0, t2, MOVE 		# Se código != W, volta pro começo
+			li t1, 87          		# Código ASCII do W
+			beq t0, t1, moveCONT3  		# Se código == W, pula e continua
+			li t1, 119          		# Código ASCII do w
+			beq t0, t1, moveCONT3		# Se código == w, pula e continua
+			
+			li a7, 30			# Checa se já passou o tempo
+			ecall
+			lw t1,TEMPOACELERADOR
+			blt a0,t1,MOVE
+			
+			# Define novo tempo
+			li t2, 0x000003E8
+			add t2, a0, t2			# Adiciona 1 segundo ao tempo
+			la t1,TEMPOACELERADOR
+			sw t2,(t1)
+			
+			add s11, zero, zero
 		
-	CONT:	bne s1, a1, printSEQUENCE_LOOP  # Loop enquanto s1 != a1
+			j MOVE
+		moveCONT3:	
+			addi s11, s11, 1
+			addi s4, s4, -1
+			bnez s4, printSEQUENCE_LOOP  	# Loop enquanto s1 != a1
 				
-		mv ra, s0
-		ret
-
+			mv ra, s0
+			ret
+		
 # Printa imagem com dimensões definidas fora da função
-# >Argumentos: Largura (a4) e Endereço da impressão (s6 - inicio e a2 - fim)<
+# >Argumentos: a1 (Endereço da imagem), t2 (Endereço de início da impressão), a4 (Largura), a6 (Altura)
+# a2 = Endereço final da impressão (ñ é argumento)
 printUND:
-	add a5, s6, zero        # Guarda valor do endereço inicial em a5
+	add a5, t2, zero        # Guarda valor do endereço inicial em a5
 	
 	li t5,1                  # Inicializa contador
 	li t6,320                # 320 p/ usar em contas
+	
+	# Conta p/ conseguir o endereço final
+	addi a2,a6,-1
+	mul a2,a2,t6
+	add a2,a2,a4
+	add a2,a2,t2
 	
 	printUND_LOOP1:
 		add t4,a5,zero           # Guarda valor do endereço inicial em t4	
 		mul t0,t6,t5             # Faz 320 * contador
 		add t4,t4,t0             # Define qual será o próximo endereço
 	
-		add a3,s6,zero           # Guarda valor do endereço inicial em a3
+		add a3,t2,zero           # Guarda valor do endereço inicial em a3
 		add a3,a3,a4             # Soma o endereço inicial à largura
 	
 	printUND_LOOP2:
-		beq s6,a3,printUND_EXIT  # Sai quando tiver printado valor correspondente à largura
-		lw s2,0(s5)              # Lê 4 pixels
-		sw s2,0(s6)              # Escreve a word na memória
-		addi s6,s6,4             # Soma 4 ao inicial
-		addi s5,s5,4             # Soma 4 ao endereço da imagem
+		beq t2,a3,printUND_EXIT # Sai quando tiver printado valor correspondente à largura
+		lw t1,0(a1)              # Lê 4 pixels
+		sw t1,0(t2)              # Escreve a word na memória
+		addi t2,t2,4             # Soma 4 ao inicial
+		addi a1,a1,4             # Soma 4 ao endereço da imagem
 		j printUND_LOOP2
 	
 	printUND_EXIT:	
-		addi t5,t5,1            # Adiciona 1 ao contador	
-		add s6,t4,zero          # Coloca o próximo endereço
-		blt s6,a2,printUND_LOOP1 # Faz branch enquanto não alcança o endereço final
+		addi t5,t5,1              # Adiciona 1 ao contador	
+		add t2,t4,zero            # Coloca o próximo endereço
+		blt t2,a2,printUND_LOOP1 # Faz branch enquanto não alcança o endereço final
 		ret
 
 # >Argumentos: posiçao inicial - s10 (inicio) e s11 (fim)
 # Os únicos registradores que precisam ser salvos após a função são s10 e s11
 moveCARRO:
-	mv s4, ra
+	mv a7, ra
 	
-	add s6, s10, zero  # Coloca valor armazenado em s10 em s6
-	add a2, s11, zero  # Coloca valor armazenado em s11 em a2
+	add t2, s10, zero # Coloca valor armazenado em s10 em t2
 	
-	add a3, s6, zero  # Coloca valor armazenado em s6 em a3
+	add a3, t2, zero # Coloca valor armazenado em t2 em a3
 	
-	la s5, CarroV0
-	li a4, 16         # Define largura da imagem
+	la a1, CarroV0
+	li a4, 16	# Define largura da imagem
+	li a6, 16	# Define altura da imagem
 	call printUND
 	
-	mv ra, s4
+	mv ra, a7
 	
 	#Printa p/ a direita quando aperta d/D
-	
-	li t6, 87         # Código ASCII do W
-	li s6, 119        # Código ASCII do w
-	
-	li t1, 68         # Código ASCII do D
-	li t2, 100        # Código ASCII do d
-	li t3, 65         # Código ASCII do A
-	li t4, 97         # Código ASCII do a
-	
+		
 	li t5, 0xFF200000 # Carrega endereço do KDMMIO
 	lw t0, 4(t5)      # Lê código ASCII da tecla
 	sw t0, 12(t5)     # Põe no display
 	sw zero, 4(t5)    # Limpa o código ASCII 
 	
-	beq t0, t1, moveCARROR # Se código ASCII = D/d, vai p/ moveCARROR
+	li t2, 68         # Código ASCII do D
+	beq t0, t2, moveCARROR # Se código ASCII = D/d, vai p/ moveCARROR
+	li t2, 100        # Código ASCII do d
 	beq t0, t2, moveCARROR
 	
-	beq t0, t3, moveCARROL # Se código ASCII = A/a, vai p/ moveCARROL
-	beq t0, t4, moveCARROL
+	li t2, 65         # Código ASCII do A
+	beq t0, t2, moveCARROL # Se código ASCII = A/a, vai p/ moveCARROL
+	li t2, 97         # Código ASCII do a
+	beq t0, t2, moveCARROL
 	
-	beq t0, t6, CONT       # Se código ASCII = W/w, vai p/ CONT
-	beq t0, s6, CONT
+	li t2, 87         # Código ASCII do W
+	beq t0, t2, moveCONT3       # Se código ASCII = W/w, vai p/ CONT
+	li t2, 119         # Código ASCII do w
+	beq t0, t2, moveCONT3
 	
-	ret
+	j moveCONT2
 moveCARROR:
-	li t1, 0xFF00FE70
-	beq s10, t1, PRINT_EXIT
+	li t2, 0xFF00FE70
+	beq s10, t2, PRINT_EXIT
 
-	add s6, s10, zero
-	add a2, s11, zero
+	add t2, s10, zero
 	
-	la s5, TILE1
-	li a4, 16
+	la a1, TILE1
+	li a4, 16	# Define largura
+	li a6, 16	# Define altura
 	
-	mv s4, ra
-	call printUND		# Remove o rastro
-	mv ra, s4
+	mv a7, ra
+	call printUND	# Remove o rastro
+	mv ra, a7
 	
 	addi s10, s10, 4
-	addi s11, s11, 4
 	j moveCARRO
 moveCARROL:
-	li t1, 0xFF00FE18
-	beq s10, t1, PRINT_EXIT
+	li t2, 0xFF00FE18
+	beq s10, t2, PRINT_EXIT
 
-	add s6, s10, zero
-	add a2, s11, zero
+	add t2, s10, zero
 	
-	la s5, TILE1
-	li a4, 16
+	la a1, TILE1
+	li a4, 16	# Define largura
+	li a6, 16	# Define altura
 	
-	mv s4, ra
-	call printUND		# Remove o rastro
-	mv ra, s4
+	mv a7, ra
+	call printUND	# Remove o rastro
+	mv ra, a7
 		
 	addi s10, s10, -4
-	addi s11, s11, -4
 	j moveCARRO
 	
 # Toca música sem pausar o jogo
@@ -317,6 +378,7 @@ tocamusicaMENU:
 		
 		mv ra, t2
 		ret
+		
 # Toca a primeira música e um som 4 vezes pausadamente, sendo a largada da corrida
 # >Argumentos: s0 (Notas da Largada) e s7 (Contador de Notas)<
 LARGADA:
@@ -391,3 +453,25 @@ LARGADA:
 	maisvolLARGADA:
 		li a3,100
 		j contloopLARGADA
+		
+ACELERADOR1:
+	li t2, 0xFF006A08
+	la a1, Acelerador1
+	li a4, 40			# Define largura da imagem
+	li a6, 24			# Define altura da imagem
+	call printUND
+	j moveCONT1
+ACELERADOR2:
+	li t2, 0xFF006A08
+	la a1, Acelerador2
+	li a4, 40			# Define largura da imagem
+	li a6, 24			# Define altura da imagem
+	call printUND
+	j moveCONT1
+ACELERADOR3:
+	li t2, 0xFF006A08
+	la a1, Acelerador3
+	li a4, 40			# Define largura da imagem
+	li a6, 24			# Define altura da imagem
+	call printUND
+	j moveCONT1
