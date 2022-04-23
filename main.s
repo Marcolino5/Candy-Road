@@ -1,17 +1,23 @@
 .data
-.include "Imagens/Menu.s"
 
 ### INTERFACE ###
+.include "Imagens/Menu.s"
+.include "Imagens/Course1.s"
+
 .include "Imagens/Acelerador1.s"
 .include "Imagens/Acelerador2.s"
 .include "Imagens/Acelerador3.s"
 
 .include "Imagens/Fuel.s"
 
+.include "Imagens/Empty.s"
+.include "Imagens/Gameover.s"
+
 ### MUSICAS ###
 .include "Musicas/MusicaMenu.s"
 .include "Musicas/Largada1.s"
 .include "Musicas/MusicaLargada1.s"
+.include "Musicas/Naruto.s"
 
 ### TILES ###
 .include "Imagens/TileM.s"
@@ -28,14 +34,17 @@
 
 TEMPOACELERADOR: .word 0x00000000
 PONTUAÇÃO: .word 0x00000000
-GASOLINA: .word 0x00000000
+PONTUAÇÃOFASE1: .word 0x00000000
+PONTUAÇÃOFASE2: .word 0x00000000
+TEMPOGASOLINA: .word 0x00000000
+CONTADORGASOLINA: .word 0x00000000
 
 .text
 j MENU	
 MENU:						
 	la a0, Menu
 	call PRINT          # Printa o Menu
-	li s10, 0xFF00CC28  # Endereço de início da impressão
+	li s10, 0xFF00CC28  # Endereço de início da impressão da seta
 menuMUSICA:	
 	#Parte que toca música
 	la s0,notasMENU		# Carrega notas do menu	
@@ -78,7 +87,7 @@ menuMUSICA:
 		beq s10, t1, goMAPA1
 		j SETA # Se não tiver no endereço, volta p/ SETA
 		
-	goMAPA1:beq t0, a1, MAPA1
+	goMAPA1:beq t0, a1, COURSE1
 		
 		j SETA # Se não tiver apertado, volta p/ SETA
 	SETAU:  
@@ -109,7 +118,16 @@ menuMUSICA:
 		j SETA
 	li a7, 10
 	ecall
-
+	
+COURSE1:
+	la a0, Course1
+	call PRINT
+	
+	li a7, 32
+	li a0, 2000
+	ecall
+	
+	j MAPA1
 MAPA1:
 	li s10, 0xFF00FE30       	# Define inicio p/ MoveCARRO - NÃO USAR REGISTRADOR EM OUTRAS PARTES
 	li s11, 0                       # Contador da aceleração - NÃO USAR REGISTRADOR EM OUTRAS PARTES
@@ -132,7 +150,7 @@ MAPA1:
 	li a6, 40			# Define altura da imagem
 	call printUND
 	
-	li s9, 0xFF10D948               # Define inicio p/ GASOLINA - NÃO USAR REGISTRADOR EM OUTRAS PARTES 
+	la s9, Fuel			# Define inicio p/ GASOLINA - NÃO USAR REGISTRADOR EM OUTRAS PARTES 
 	
 	la a0, Mapa1Og		        # Carrega Mapa1
 	call PRINT                      # Chama a função PRINT
@@ -205,6 +223,14 @@ printSEQUENCE:
 		call printUND			# Printa a imagem no endereço atual, que sai no processo +76800 (320 x 240)
 		mv s3,a1
 	MOVE:
+		attGASOLINA:
+			li a7, 30
+			ecall
+			lw t1, TEMPOGASOLINA
+			beqz t1, PRINTAGASOLINA
+			blt a0, t1, attACELERACAO
+			j PRINTAGASOLINA
+			
 		attACELERACAO:
 			beqz s11,ACELERADOR1
 			li t1,1
@@ -475,3 +501,80 @@ ACELERADOR3:
 	li a6, 24			# Define altura da imagem
 	call printUND
 	j moveCONT1
+	
+PRINTAGASOLINA:
+	li t2, 0xFF00D948
+	
+	add a1, s9, zero
+	li a4, 24			# Define largura da imagem
+	li a6, 40			# Define altura da imagem
+	call printUND
+	add s9, a1, zero
+	
+	lw t1, CONTADORGASOLINA
+	addi t1, t1, 0x00000001
+	la t5, CONTADORGASOLINA
+	sw t1, (t5)
+	
+	lw t1, CONTADORGASOLINA
+	li t5, 8
+	bge t1, t5, DERROTA
+	
+	li a7, 30
+	li t3, 0x000036B0
+	add t4, a0, t3
+	la t1, TEMPOGASOLINA
+	sw t4, (t1)
+	j attACELERACAO
+	
+DERROTA:
+	li t2, 0xFF00633C
+	la a1, EMPTY
+	li a4, 40
+	li a6, 8
+	call printUND			# Coloca imagem de tanque vazio
+	
+	la t1, CONTADORGASOLINA
+	li t3, 0x00000000
+	sw t3, (t1)
+	
+	la t1, PONTUAÇÃO
+	li t3, 0x00000000
+	sw t3, (t1)
+	
+	li a0, 2000
+	li a7, 32
+	ecall				# Pausa o jogo
+	
+	li t2, 0xFF00633C
+	la a1, Gameover
+	li a4, 40
+	li a6, 16
+	call printUND			# Coloca imagem de final de jogo
+	
+	la t1,numNARUTO			
+	lw t2,0(t1)		
+	la t1,notasNARUTO		
+	li t0,0				# Inicia o contador
+	li a2,76 			# Instrumento
+	li a3,60			# Volume
+
+tocaNA:	beq t0,t2, fimNA		# Termina se alcançar o n de notas
+	lw a0,0(t1)			# Coloca nota
+	lw a1,4(t1)			# Coloca duração	
+	li a7,31		
+	ecall			
+	addi t0,t0,1			
+	
+	mv a0,a1		
+	li a7,32		
+	ecall				# Pausa o jogo pela duração
+	
+	addi t1,t1,8			# Próx nota/num
+	j tocaNA			# Volta o loop
+	
+fimNA:	li a0, 2000
+	li a7, 32
+	ecall				# Pausa o jogo
+	
+	j MENU
