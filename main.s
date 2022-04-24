@@ -3,21 +3,30 @@
 ### INTERFACE ###
 .include "Imagens/Menu.s"
 .include "Imagens/Course1.s"
+.include "Imagens/Course2.s"
+
+.include "Imagens/CarroVM.s"
+.include "Imagens/Map.s"
 
 .include "Imagens/Acelerador1.s"
 .include "Imagens/Acelerador2.s"
 .include "Imagens/Acelerador3.s"
 
 .include "Imagens/Fuel.s"
-
 .include "Imagens/Empty.s"
+
+.include "Imagens/Coin.s"
+.include "Imagens/Pontos.s"
+
 .include "Imagens/Gameover.s"
+.include "Imagens/Checkpoint.s"
 
 ### MUSICAS ###
 .include "Musicas/MusicaMenu.s"
 .include "Musicas/Largada1.s"
 .include "Musicas/MusicaLargada1.s"
 .include "Musicas/Naruto.s"
+.include "Musicas/MusicaVitoria.s"
 
 ### TILES ###
 .include "Imagens/TileM.s"
@@ -28,6 +37,10 @@
 .include "Imagens/Mapa1Og.s"
 .include "Imagens/Mapa1.s"
 .include "Imagens/Mapa2.s"
+.include "Imagens/Mapa2.5.s"
+.include "Imagens/Mapa2.55.s"
+.include "Imagens/Mapa3.s"
+.include "Imagens/Vitoria1.s"
 
 ### CARROS ###
 .include "Imagens/CarroV0.data"
@@ -38,6 +51,7 @@ PONTUAÇÃOFASE1: .word 0x00000000
 PONTUAÇÃOFASE2: .word 0x00000000
 TEMPOGASOLINA: .word 0x00000000
 CONTADORGASOLINA: .word 0x00000000
+POSIÇÃOCARROM: .word 0xFF011584
 
 .text
 j MENU	
@@ -127,8 +141,8 @@ COURSE1:
 	li a0, 2000
 	ecall
 	
-	j MAPA1
-MAPA1:
+	j FASE1
+FASE1:
 	li s10, 0xFF00FE30       	# Define inicio p/ MoveCARRO - NÃO USAR REGISTRADOR EM OUTRAS PARTES
 	li s11, 0                       # Contador da aceleração - NÃO USAR REGISTRADOR EM OUTRAS PARTES
 	
@@ -148,6 +162,18 @@ MAPA1:
 	la a1, Fuel
 	li a4, 24			# Define largura da imagem
 	li a6, 40			# Define altura da imagem
+	call printUND
+	
+	li t2, 0xFF111584
+	la a1, CarroVM
+	li a4, 8			# Define largura da imagem
+	li a6, 16			# Define altura da imagem
+	call printUND
+	
+	li t2, 0xFF102F3C
+	la a1, Pontos
+	li a4, 60
+	li a6, 12
 	call printUND
 	
 	la s9, Fuel			# Define inicio p/ GASOLINA - NÃO USAR REGISTRADOR EM OUTRAS PARTES 
@@ -174,6 +200,18 @@ MAPA1:
 	li a6, 40			# Define altura da imagem
 	call printUND
 	
+	li t2, 0xFF011584
+	la a1, CarroVM
+	li a4, 8			# Define largura da imagem
+	li a6, 16			# Define altura da imagem
+	call printUND
+	
+	li t2, 0xFF002F3C
+	la a1, Pontos
+	li a4, 60
+	li a6, 12
+	call printUND
+	
 	li t6, 0                        # Define frame como 0
 	la s0, notasMLARGADA1           # Carrega notas da largada
 	li s7, 0			# Inicia contador de notas
@@ -183,7 +221,7 @@ MAPA1:
         li s4, 9                        # Define quantas imagens 320x240 de Mapa1 serão printadas
       	call printSEQUENCE	        # Chama função PRINT-SEQUENCE
       	
-	li s8, 2                        # Define quantas vezes o loop será chamado
+	li s8, 24                        # Define quantas vezes o loop será chamado
   	MAPA1.2_LOOP:
       		la s3, Mapa2            # Carrega Mapa2
       		li s4, 8    		# Define quantas imagens 320x240 de Mapa2 serão printadas 
@@ -191,9 +229,40 @@ MAPA1:
       		
       		addi s8, s8, -1
       		bnez s8, MAPA1.2_LOOP
+      	
+      	la s3, Mapa2.5			# Carrega Mapa2.5
+      	li s4, 8			# Define quantas imagens 320x240 de Mapa2.4 serão printadas
+      	call printSEQUENCE
+      	
+      	la s3, Mapa2.55			# Carrega Mapa2.55
+      	li s4, 7			# Define quantas imagens 320x240 de Mapa2.55 serão printadas
+      	call printSEQUENCE
+      	
+      	li s8, 24                        # Define quantas vezes o loop será chamado
+  	MAPA1.3_LOOP:
+      		la s3, Mapa3            # Carrega Mapa2
+      		li s4, 8    		# Define quantas imagens 320x240 de Mapa2 serão printadas 
+      		call printSEQUENCE
       		
-      	li a7, 10
-      	ecall
+      		addi s8, s8, -1
+      		bnez s8, MAPA1.3_LOOP
+      	
+      	la s3, Vitoria1
+      	li s4, 8
+      	call printSEQUENCE
+      	
+      	j VITORIA1
+
+COURSE2:
+	la a0, Course2
+	call PRINT
+	
+	li a7, 32
+	li a0, 2000
+	ecall
+	
+	j MENU
+      	
 
 # Printa uma imagem 320x240
 PRINT:		
@@ -264,7 +333,44 @@ printSEQUENCE:
 			add s11, zero, zero
 		
 			j MOVE
-		moveCONT3:	
+		moveCONT3:
+			lw t2, POSIÇÃOCARROM
+			li t4, 2
+			rem t5, s4, t4
+			bnez t5, moveCONT4		# Move só a cada 2 passos
+
+			li t2, 0xFF000000
+			la a1, MapINTER
+			li a4, 20			# Define largura da imagem
+			li a6, 240			# Define altura da imagem
+			call printUND			# Printa o mapa da interface de novo p/ retirar rastro
+
+			lw t2, POSIÇÃOCARROM
+			li t1, -320
+			add t2, t2, t1			# Coloca nova posição do carro da interface
+		moveCONT4:
+			add a7, t2, zero
+			la a1, CarroVM
+			li a4, 8			# Define largura da imagem
+			li a6, 16			# Define altura da imagem
+			call printUND
+			la t3, POSIÇÃOCARROM
+			sw a7, (t3)			# Guarda a nova posição
+			
+			lw t1, PONTUAÇÃO
+			addi t1, t1, 100
+			la t2, PONTUAÇÃO
+			sw t1, (t2)
+			
+			li t3, 8000
+			beq t1, t3, MOEDA1
+			li t3, 16000
+			beq t1, t3, MOEDA2
+			li t3, 24000
+			beq t1, t3, MOEDA3
+			li t3, 40000
+			beq t1, t3, MOEDA4
+		moveCONT5:
 			addi s11, s11, 1
 			addi s4, s4, -1
 			bnez s4, printSEQUENCE_LOOP  	# Loop enquanto s1 != a1
@@ -521,9 +627,9 @@ PRINTAGASOLINA:
 	bge t1, t5, DERROTA
 	
 	li a7, 30
-	li t3, 0x000036B0
+	li t3, 0x00001D4C
 	add t4, a0, t3
-	la t1, TEMPOGASOLINA
+	la t1, TEMPOGASOLINA		# Altera o tempo de mudança da gasolina
 	sw t4, (t1)
 	j attACELERACAO
 	
@@ -540,6 +646,10 @@ DERROTA:
 	
 	la t1, PONTUAÇÃO
 	li t3, 0x00000000
+	sw t3, (t1)
+	
+	la t1, POSIÇÃOCARROM
+	li t3, 0xFF011584
 	sw t3, (t1)
 	
 	li a0, 2000
@@ -578,3 +688,126 @@ fimNA:	li a0, 2000
 	ecall				# Pausa o jogo
 	
 	j MENU
+
+VITORIA1:
+	li a0, 1000
+	li a7, 32
+	ecall				# Pausa o jogo
+	
+	li t2, 0xFF006330
+	la a1, Checkpoint
+	li a4, 56
+	li a6, 8
+	call printUND			# Coloca imagem de checkpoint
+	
+	la t1, PONTUAÇÃO
+	li t3, 0x00000000
+	sw t3, (t1)
+	
+	la t1, CONTADORGASOLINA
+	li t3, 0x00000000
+	sw t3, (t1)
+	
+	la t1, POSIÇÃOCARROM
+	li t3, 0xFF011584
+	sw t3, (t1)
+	
+	la t1,numVICTORY			
+	lw t2,0(t1)		
+	la t1,notasVICTORY		
+	li t0,0				# Inicia o contador
+	li a2,3 			# Instrumento
+	li a3,60			# Volume
+
+tocaVY1:beq t0,t2, fimVY1		# Termina se alcançar o n de notas
+	lw a0,0(t1)			# Coloca nota
+	lw a1,4(t1)			# Coloca duração	
+	li a7,31		
+	ecall			
+	addi t0,t0,1			
+	
+	mv a0,a1		
+	li a7,32		
+	ecall				# Pausa o jogo pela duração
+	
+	addi t1,t1,8			# Próx nota/num
+	j tocaVY1			# Volta o loop
+	
+fimVY1:	li a0, 2000
+	li a7, 32
+	ecall				# Pausa o jogo
+	
+	j COURSE2
+	
+MOEDA1:	li t2, 0xFF002F3C
+	la a1, Coin
+	li a4, 12
+	li a6, 12
+	call printUND
+	
+	li a7, 31
+	li a0, 84
+	li a1, 1000
+	li a2, 3
+	li a3, 60
+	ecall
+	
+	lw t1, PONTUAÇÃO
+	addi t1, t1, 100
+	la t2, PONTUAÇÃO
+	sw t1, (t2)
+	j moveCONT5
+MOEDA2:	li t2, 0xFF002F48
+	la a1, Coin
+	li a4, 12
+	li a6, 12
+	call printUND
+	
+	li a7, 31
+	li a0, 84
+	li a1, 1000
+	li a2, 3
+	li a3, 60
+	ecall
+	
+	lw t1, PONTUAÇÃO
+	addi t1, t1, 100
+	la t2, PONTUAÇÃO
+	sw t1, (t2)
+	j moveCONT5
+MOEDA3:	li t2, 0xFF002F54
+	la a1, Coin
+	li a4, 12
+	li a6, 12
+	call printUND
+	
+	li a7, 31
+	li a0, 84
+	li a1, 1000
+	li a2, 3
+	li a3, 60
+	ecall
+	
+	lw t1, PONTUAÇÃO
+	addi t1, t1, 100
+	la t2, PONTUAÇÃO
+	sw t1, (t2)
+	j moveCONT5
+MOEDA4:	li t2, 0xFF002F60
+	la a1, Coin
+	li a4, 12
+	li a6, 12
+	call printUND
+	
+	li a7, 31
+	li a0, 84
+	li a1, 1000
+	li a2, 3
+	li a3, 60
+	ecall
+	
+	lw t1, PONTUAÇÃO
+	addi t1, t1, 100
+	la t2, PONTUAÇÃO
+	sw t1, (t2)
+	j moveCONT5
