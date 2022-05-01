@@ -11,6 +11,8 @@
 
 .include "Imagens/CarroVM.s"
 .include "Imagens/CarroSM.s"
+.include "Imagens/CarroGM.s"
+.include "Imagens/CarroLM.s"
 .include "Imagens/Map.s"
 
 .include "Imagens/Acelerador1.s"
@@ -50,6 +52,8 @@
 ### CARROS ###
 .include "Imagens/CarroV0.data"
 .include "Imagens/CarroS0.s"
+.include "Imagens/CarroG0.s"
+.include "Imagens/CarroL0.s"
 
 TEMPOACELERADOR: .word 0x00000000
 PONTUAÇÃO: .word 0x00000000
@@ -1093,6 +1097,14 @@ VANELLOPE1:
 	ecall		#Toca única nota
 	j COURSE1
 GLOYD1:
+	la t1, CARRO
+	la t2, CarroG0
+	sw t2, (t1)		# Coloca carro do Gloyd em CARRO
+	
+	la t1, CARROM
+	la t2, CarroGM
+	sw t2, (t1)		# Coloca carro do Gloyd na interface
+	
 	li a7, 31
 	li a0, 67
 	li a1, 1000
@@ -1117,6 +1129,14 @@ SNOWANNA1:
 	ecall		#Toca única nota
 	j COURSE1
 LAMAR1:
+	la t1, CARRO
+	la t2, CarroL0
+	sw t2, (t1)
+	
+	la t1, CARROM
+	la t2, CarroLM
+	sw t2, (t1)
+	
 	li a7, 31
 	li a0, 67
 	li a1, 1000
