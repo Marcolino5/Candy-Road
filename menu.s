@@ -277,4 +277,4 @@ COURSE2:
 	li a0, 2000
 	ecall
 	
-	j MENU
+	j FASE2
