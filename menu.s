@@ -97,6 +97,16 @@ COURSE1:
 	la a0, Course1
 	call PRINT
 	
+	lw t1, PONTUAÇÃOMAX
+	beqz t1, course1CONT
+	mv a0, t1 # Número printado
+	li a1, 140 # 320 / 2 -> Meio horizontal da tela
+	li a2, 150 # 240 / 2 -> Meio vertical da tela
+	li a3, 0x000000ff # Texto branco fundo vermelho, de acordo com a representacao no print enviado
+	li a4, 0 # frame 0
+	li a7, 101 # ecall do print int 
+	ecall
+course1CONT:
 	li a7, 32
 	li a0, 2000
 	ecall
@@ -283,9 +293,24 @@ LAMAR1:
 	ecall		#Toca única nota
 	j COURSE1
 COURSE2:
+	la t1, TEMPOACELERADOR
+	li a7, 30
+	ecall
+	sw a0, (t1)			# Coloca tempo inicial no TEMPOACELERADOR
+	
 	la a0, Course2
 	call PRINT
 	
+	lw t1, PONTUAÇÃOMAX
+	beqz t1, course2CONT
+	mv a0, t1 # Número printado
+	li a1, 140 # 320 / 2 -> Meio horizontal da tela
+	li a2, 150 # 240 / 2 -> Meio vertical da tela
+	li a3, 0x000000ff # Texto branco fundo vermelho, de acordo com a representacao no print enviado
+	li a4, 0 # frame 0
+	li a7, 101 # ecall do print int 
+	ecall
+course2CONT:
 	li a7, 32
 	li a0, 2000
 	ecall

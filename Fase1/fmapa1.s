@@ -37,7 +37,7 @@ moveCARRO:
 	
 	j moveCONT2
 moveCARROR:
-	li t2, 0xFF00FE70
+	li t2, 0xFF00FE6C
 	beq s10, t2, PRINT_EXIT
 	
 	add t2, s10, zero
@@ -52,7 +52,7 @@ moveCARROR:
 	addi s10, s10, 4
 	j moveCARRO
 moveCARROL:
-	li t2, 0xFF00FE70
+	li t2, 0xFF00FE18
 	beq s10, t2, PRINT_EXIT
 
 	add t2, s10, zero
@@ -256,6 +256,7 @@ DERROTA:
 	li t3, 0x00000000
 	sw t3, (t1)
 	
+	derrotaCONT:
 	la t1, POSI플OCARROM
 	li t3, 0xFF011584
 	sw t3, (t1)
@@ -302,9 +303,11 @@ VITORIA1:
 	li a7, 32
 	ecall				# Pausa o jogo
 	
-	la t1, PONTUA플O
-	li t3, 0x00000000
-	sw t3, (t1)
+	lw t1, PONTUA플OMAX
+	lw t2, PONTUA플O
+	blt t2, t1, derrotaCONT
+	la t3, PONTUA플OMAX
+	sw t2, (t3)
 	
 	la t1, CONTADORGASOLINA
 	li t3, 0x00000000

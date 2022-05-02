@@ -35,6 +35,7 @@
 .include "Musicas/MusicaLargada1.s"
 .include "Musicas/Emotion.s"
 .include "Musicas/MusicaVitoria.s"
+.include "Musicas/Thousand.s"
 
 ### TILES ###
 .include "Imagens/TileM.s"
@@ -58,10 +59,12 @@
 .include "Imagens/CarroG0.s"
 .include "Imagens/CarroL0.s"
 
+### OBSTÁCULOS ###
+.include "Imagens/ColaE.s"
+
 TEMPOACELERADOR: .word 0x00000000
 PONTUAÇÃO: .word 0x00000000
-PONTUAÇÃOFASE1: .word 0x00000000
-PONTUAÇÃOFASE2: .word 0x00000000
+PONTUAÇÃOMAX: .word 0x00000000
 TEMPOGASOLINA: .word 0x00000000
 CONTADORGASOLINA: .word 0x00000000
 POSIÇÃOCARROM: .word 0xFF011584
@@ -72,8 +75,13 @@ N2: .byte 0
 
 NIMAGENS: .word 0x00000000
 MAPAATUAL: .word 0x00000000
+PARTE: .word 0x00000000
 NLOOP: .word 0x00000000
 RAPRINT: .word 0x00000000
+
+ENDEREÇO1: .word 0x00000000
+ENDEREÇO2: .word 0x00000000
+ENDEREÇO3: .word 0x00000000
 
 .text
 j MENU
@@ -85,6 +93,9 @@ FASE1:
 	# Preparação da fase 1
 	.include "Fase1/smapa1.s"
 	
+	la t1, PARTE
+	li t2, 1
+	sw t2, (t1)			# Define que está na 1 parte
 	la t1, MAPAATUAL
 	la t2, Mapa1                    # Carrega Mapa1
 	sw t2, (t1)			# Coloca endereço de Mapa1 em MAPAATUAL
@@ -93,6 +104,9 @@ FASE1:
 	sw t2, (t1)			# Define quantas imagens 320x240 de Mapa1 serão printadas
       	call printSEQUENCE	        # Chama função PRINT-SEQUENCE
       	
+      	la t1, PARTE
+	li t2, 2
+	sw t2, (t1)			# Define que está na 2 parte
       	la t1, NLOOP
       	li t2, 24
       	sw t2, (t1)			# Define quantas vezes o loop será chamado
@@ -111,6 +125,9 @@ FASE1:
       		sw t2, (t1)		# Atualiza o valor de NLOOP
       		bnez t2, MAPA1.2_LOOP
       	
+      	la t1, PARTE
+	li t2, 3
+	sw t2, (t1)			# Define que está na 3 parte
       	la t1, MAPAATUAL
 	la t2, Mapa2.5                  # Carrega Mapa2.5
 	sw t2, (t1)			# Coloca endereço de Mapa1 em MAPAATUAL
@@ -119,6 +136,9 @@ FASE1:
 	sw t2, (t1)			# Define quantas imagens 320x240 de Mapa1 serão printadas
       	call printSEQUENCE
       	
+      	la t1, PARTE
+	li t2, 4
+	sw t2, (t1)			# Define que está na 4 parte
       	la t1, MAPAATUAL
 	la t2, Mapa2.55                 # Carrega Mapa2.55
 	sw t2, (t1)			# Coloca endereço de Mapa1 em MAPAATUAL
@@ -127,6 +147,9 @@ FASE1:
 	sw t2, (t1)			# Define quantas imagens 320x240 de Mapa1 serão printadas
       	call printSEQUENCE
       	
+      	la t1, PARTE
+	li t2, 5
+	sw t2, (t1)			# Define que está na 5 parte
       	la t1, NLOOP
       	li t2, 24
       	sw t2, (t1)			# Define quantas vezes o loop será chamado
@@ -145,6 +168,9 @@ FASE1:
       		sw t2, (t1)			# Atualiza o valor de NLOOP
       		bnez t2, MAPA1.3_LOOP
       	
+      	la t1, PARTE
+	li t2, 6
+	sw t2, (t1)			# Define que está na 6 parte
       	la s3, Vitoria1
       	la t1, NIMAGENS
 	li t2, 8
@@ -170,7 +196,11 @@ printSEQUENCE:
 		call printUND			# Printa a imagem no endereço atual, que sai no processo +76800 (320 x 240)
 		la t1, MAPAATUAL
 		sw a1, (t1)			# Atualiza o endereço em MAPAATUAL
+	
 	MOVE:
+		# Inclusão dos obstáculos ao mapa
+		
+		# Gasolina, aceleração, etc
 		attGASOLINA:
 			li a7, 30
 			ecall
