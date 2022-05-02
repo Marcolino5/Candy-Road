@@ -2,6 +2,7 @@
 Projeto de ISC 
 
 Como Jogar:
+> Arraste a pasta main até fpgrars
 
 Menu:
 Espaço - Confirmar opção
