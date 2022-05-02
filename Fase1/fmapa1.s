@@ -314,6 +314,14 @@ VITORIA1:
 	li t3, 0xFF011584
 	sw t3, (t1)
 	
+	lb t2, N2			# Desbloqueia o nível 2
+	bnez t2, continuaai
+	la t1, N2
+	lb t2, N2
+	xori t2, t2, 1
+	sb t2, (t1)
+	
+continuaai:
 	la t1,numVICTORY			
 	lw t2,0(t1)		
 	la t1,notasVICTORY		

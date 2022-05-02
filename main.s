@@ -68,6 +68,7 @@ POSIÇÃOCARROM: .word 0xFF011584
 CARRO: .word 0x00000000
 CARROM: .word 0x00000000
 UNLOCKED: .byte 0
+N2: .byte 0
 
 NIMAGENS: .word 0x00000000
 MAPAATUAL: .word 0x00000000
@@ -314,7 +315,6 @@ FASE2:
 	li a0, 5000
 	ecall
 	
-	li a7, 10
-	ecall
+	j MENU
 	
 	

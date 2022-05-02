@@ -40,12 +40,25 @@ menuMUSICA:
 		beq t0, t3, SETAD # Se aperta em S desce a seta
 		beq t0, t4, SETAD
 		
-		li t1, 0xFF00CC28
-		beq s10, t1, goMAPA1
+		
+		li t1, 0xFF00CC28    # Verifica se está na posição certa
+		beq s10, t1, goMAPA1 # Vai p/ Mapa1
+		
+		lb t1, N2	# Verifica se já desbloqueou a fase 2
+		beqz t1, SETA
+		
+		li t1, 0xFF00F1A8    # Verifica se está na posição certa
+		beq s10, t1, goMAPA2 # Vai p/ Mapa2
+		
 		j SETA # Se não tiver no endereço, volta p/ SETA
 		
 	goMAPA1:li s11, 0xFF002E71
 		beq t0, a1, CHARACTERSELECTION1
+		
+		j SETA # Se não tiver apertado, volta p/ SETA
+		
+	goMAPA2:li s11, 0xFF002E71
+		beq t0, a1, COURSE2
 		
 		j SETA # Se não tiver apertado, volta p/ SETA
 	SETAU:  
