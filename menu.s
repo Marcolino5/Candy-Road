@@ -2,6 +2,7 @@ MENU:
 	la a0, Menu
 	call PRINT          # Printa o Menu
 	li s10, 0xFF00CC28  # Endereço de início da impressão da seta
+	
 menuMUSICA:	
 	#Parte que toca música
 	la s0,notasMENU		# Carrega notas do menu	
@@ -115,6 +116,14 @@ course1CONT:
 CHARACTERSELECTION1:
 	la a0, CharacterSelection
 	call PRINT
+	
+	lb t1, UNLOCKED 
+	beqz t1, ESCOLHA1
+	li t2, 0xFF00AAB9		# Define início na Frame 1
+	la a1, Lamar		
+	li a4, 72			# Define largura da imagem
+	li a6, 88			# Define altura da imagem
+	call printUND
 	ESCOLHA1:
 		beqz s7, playMUSICA2  # Se contador = 0, entra na música direto
 		li a7, 30	     

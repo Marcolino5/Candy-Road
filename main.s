@@ -28,6 +28,7 @@
 
 .include "Imagens/Gameover.s"
 .include "Imagens/Checkpoint.s"
+.include "Imagens/Goal.s"
 
 ### MUSICAS ###
 .include "Musicas/MusicaMenu.s"
@@ -47,11 +48,12 @@
 .include "Imagens/Mapa1.s"
 .include "Imagens/Mapa2.s"
 .include "Imagens/Mapa2.5.s"
-.include "Imagens/Mapa2.55.s"
 .include "Imagens/Mapa3.s"
 .include "Imagens/Vitoria1.s"
 .include "Imagens/Mapa4Og.s"
 .include "Imagens/Mapa4.s"
+.include "Imagens/Mapa5.s"
+.include "Imagens/Mapa6.s"
 
 ### CARROS ###
 .include "Imagens/CarroV0.data"
@@ -61,6 +63,12 @@
 
 ### OBSTÁCULOS ###
 .include "Imagens/ColaE.s"
+.include "Imagens/Bola1.s"
+
+### MISC ###
+.include "Imagens/Explosao1.s"
+.include "Imagens/Explosao2.s"
+.include "Imagens/Explosao3.s"
 
 TEMPOACELERADOR: .word 0x00000000
 PONTUAÇÃO: .word 0x00000000
@@ -79,9 +87,13 @@ PARTE: .word 0x00000000
 NLOOP: .word 0x00000000
 RAPRINT: .word 0x00000000
 
-ENDEREÇO1: .word 0x00000000
+JAPRINTOU: .byte 0
+JAPRINTOUAUX: .byte 0
+TEMPOEXPLOSAO: .word 0x00000000
+ENDEREÇO0: .word 0x00000000	# Endereço auxiliar
+ENDEREÇO1: .word 0xFF000918
 ENDEREÇO2: .word 0x00000000
-ENDEREÇO3: .word 0x00000000
+ENDEREÇO3: .word 0xFEFFE3EC
 
 .text
 j MENU
@@ -110,6 +122,7 @@ FASE1:
       	la t1, NLOOP
       	li t2, 24
       	sw t2, (t1)			# Define quantas vezes o loop será chamado
+      	
   	MAPA1.2_LOOP:
       		la t1, MAPAATUAL
 		la t2, Mapa2                    # Carrega Mapa2
@@ -138,17 +151,6 @@ FASE1:
       	
       	la t1, PARTE
 	li t2, 4
-	sw t2, (t1)			# Define que está na 4 parte
-      	la t1, MAPAATUAL
-	la t2, Mapa2.55                 # Carrega Mapa2.55
-	sw t2, (t1)			# Coloca endereço de Mapa1 em MAPAATUAL
-      	la t1, NIMAGENS
-	li t2, 7
-	sw t2, (t1)			# Define quantas imagens 320x240 de Mapa1 serão printadas
-      	call printSEQUENCE
-      	
-      	la t1, PARTE
-	li t2, 5
 	sw t2, (t1)			# Define que está na 5 parte
       	la t1, NLOOP
       	li t2, 24
@@ -169,7 +171,7 @@ FASE1:
       		bnez t2, MAPA1.3_LOOP
       	
       	la t1, PARTE
-	li t2, 6
+	li t2, 5
 	sw t2, (t1)			# Define que está na 6 parte
       	la s3, Vitoria1
       	la t1, NIMAGENS
@@ -187,8 +189,15 @@ FASE1:
 printSEQUENCE:
 	la t1, RAPRINT
 	sw ra, (t1) 				# Salva endereço de retorno
-			
+	
 	printSEQUENCE_LOOP:
+		la t1, JAPRINTOU
+		li t2, 0
+		sw t2, (t1)			# Faz com que o obstáculo possa mudar de endereço novamente
+		la t1, JAPRINTOUAUX
+		li t2, 0
+		sw t2, (t1)			# Faz com que obstáculos possam mudar o endereço novamente em conjunto
+	
 		li t2,0xFF00001C
 		li a4,216
 		li a6,240
@@ -196,11 +205,72 @@ printSEQUENCE:
 		call printUND			# Printa a imagem no endereço atual, que sai no processo +76800 (320 x 240)
 		la t1, MAPAATUAL
 		sw a1, (t1)			# Atualiza o endereço em MAPAATUAL
-	
-	MOVE:
+		
 		# Inclusão dos obstáculos ao mapa
+	OBST1:
+		lw t3, PARTE
+		li t4, 2
+		bne t3, t4, OBST2		# Define parte onde será impresso
+		lw t2, NLOOP
+		li t3, 24
+		bne t2, t3, OBST2		# Especifica parte onde será impresso
+		
+		lw t2, NIMAGENS
+		li t3, 0
+		li t4, 8
+		
+		blt t2, t3, OBST2		# Define começo das impressões
+		bgt t2, t4, OBST2		# Define final das impressões
+		
+		lw t2, ENDEREÇO1		# Define endereço
+		la a1, ColaE		
+		li a4, 16			# Define largura da imagem
+		li a6, 16			# Define altura da imagem
+		call printUND
+		lw t2, ENDEREÇO1		# Define endereço
+		call GASOLINAE			# Faz processos relacionados ao tipo de obstáculo
+		la t1, ENDEREÇO1
+		sw t2, (t1)
+		
+		li t1, 0
+		lb t1, JAPRINTOU
+		bnez t1, OBST2				# Verifica se é a primeira vez
+			
+		lw t2, ENDEREÇO3
+		li t4, 320
+		li t5, 30
+		mul t6, t4, t5
+		add t2, t2, t6
+		la t4, ENDEREÇO3
+		sw t2, (t4)				# Atualiza endereço
+			
+		la t1, JAPRINTOU
+		li t2, 1
+		sb t2, (t1)				# Modifica JAPRINTOU para que não repita
+	OBST2:
+		lw t3, PARTE
+		li t4, 2
+		bne t3, t4, moveCONT2		# Define parte onde será impresso
+		lw t2, NLOOP
+		li t3, 24
+		bne t2, t3, moveCONT2		# Especifica parte onde será impresso
+		
+		lw t2, NIMAGENS
+		li t3, 0
+		li t4, 8
+		
+		blt t2, t3, moveCONT2		# Define começo das impressões
+		bgt t2, t4, moveCONT2		# Define final das impressões
+		lw t2, ENDEREÇO3		# Define endereço
+		la a1, Bola1		
+		li a4, 16			# Define largura da imagem
+		li a6, 16			# Define altura da imagem
+		call printUND
+		lw t2, ENDEREÇO3		# Define endereço
+		call BOLAE			# Faz processos relacionados ao tipo de obstáculo	
 		
 		# Gasolina, aceleração, etc
+	MOVE:
 		attGASOLINA:
 			li a7, 30
 			ecall
@@ -214,13 +284,18 @@ printSEQUENCE:
 			li t1,1
 			beq s11,t1,ACELERADOR2
 			bgt s11,t1,ACELERADOR3
+			
 		moveCONT1:
 			call moveCARRO
+			
+		# INCLUSÃO DOS OBSTÁCULOS AO MAPA
+		posMOVE:
+			
 		moveCONT2:
 			# Move verticalmente
 	   		li t4, 0xFF200000  		# Carrega endereço do KDMMIO
 			lw t0, 4(t4)	   		# lê codigo ASCII da tecla
-			sw t0, 12(t4)      		# põe no display
+			sw t0, 12(t4)      		# Põe no display
 			sw zero, 4(t4)    		# Limpa o código ASCII
 			
 			li t1, 87          		# Código ASCII do W
@@ -297,54 +372,215 @@ printSEQUENCE:
 .include "Fase1/fmapa1.s"
 
 FASE2:
-	li s10, 0xFF00FE30       	# Define inicio p/ MoveCARRO - NÃO USAR REGISTRADOR EM OUTRAS PARTES
-	li s11, 0                       # Contador da aceleração - NÃO USAR REGISTRADOR EM OUTRAS PARTES
-	la s9, Fuel			# Define inicio p/ GASOLINA - NÃO USAR REGISTRADOR EM OUTRAS PARTES 
+	.include "Fase2/smapa2.s"
 	
-	la a0, Mapa1Og		        # Carrega Mapa1
-	call PRINT                      # Chama a função PRINT
+	la t1, PARTE
+	li t2, 1
+	sw t2, (t1)			# Define que está na 2 parte
+      	la t1, NLOOP
+      	li t2, 46
+      	sw t2, (t1)			# Define quantas vezes o loop será chamado
+      	
+  	MAPA2_LOOP:
+      		la t1, MAPAATUAL
+		la t2, Mapa4                    # Carrega Mapa2
+		sw t2, (t1)			# Coloca endereço de Mapa1 em MAPAATUAL
+      		la t1, NIMAGENS
+		li t2, 8
+		sw t2, (t1)		# Define quantas imagens 320x240 de Mapa1 serão printadas
+      		call printSEQUENCE
+      		
+      		la t1, NLOOP
+      		lw t2, NLOOP
+      		addi t2, t2, -1
+      		sw t2, (t1)		# Atualiza o valor de NLOOP
+      		bnez t2, MAPA2_LOOP
+      		
+      	la t1, PARTE
+	li t2, 2
+	sw t2, (t1)			# Define que está na 1 parte
+	la t1, MAPAATUAL
+	la t2, Mapa5                    # Carrega Mapa1
+	sw t2, (t1)			# Coloca endereço de Mapa1 em MAPAATUAL
+	la t1, NIMAGENS
+	li t2, 8
+	sw t2, (t1)			# Define quantas imagens 320x240 de Mapa1 serão printadas
+      	call printSEQUENCE	        # Chama função PRINT-SEQUENCE
+      	
+      	la t1, PARTE
+	li t2, 3
+	sw t2, (t1)			# Define que está na 2 parte
+      	la t1, NLOOP
+      	li t2, 2
+      	sw t2, (t1)			# Define quantas vezes o loop será chamado
+      	
+  	MAPA2.2_LOOP:
+      		la t1, MAPAATUAL
+		la t2, Mapa2                    # Carrega Mapa2
+		sw t2, (t1)			# Coloca endereço de Mapa1 em MAPAATUAL
+      		la t1, NIMAGENS
+		li t2, 8
+		sw t2, (t1)		# Define quantas imagens 320x240 de Mapa1 serão printadas
+      		call printSEQUENCE
+      		
+      		la t1, NLOOP
+      		lw t2, NLOOP
+      		addi t2, t2, -1
+      		sw t2, (t1)		# Atualiza o valor de NLOOP
+      		bnez t2, MAPA2.2_LOOP
+      		
+      	la t1, PARTE
+	li t2, 4
+	sw t2, (t1)			# Define que está na 1 parte
+	la t1, MAPAATUAL
+	la t2, Mapa6                    # Carrega Mapa1
+	sw t2, (t1)			# Coloca endereço de Mapa1 em MAPAATUAL
+	la t1, NIMAGENS
+	li t2, 8
+	sw t2, (t1)			# Define quantas imagens 320x240 de Mapa1 serão printadas
+      	call printSEQUENCE	        # Chama função PRINT-SEQUENCE
+      	
+      	la t1, PARTE
+	li t2, 5
+	sw t2, (t1)			# Define que está na 1 parte
+	la t1, MAPAATUAL
+	la t2, Mapa1                    # Carrega Mapa1
+	sw t2, (t1)			# Coloca endereço de Mapa1 em MAPAATUAL
+	la t1, NIMAGENS
+	li t2, 8
+	sw t2, (t1)			# Define quantas imagens 320x240 de Mapa1 serão printadas
+      	call printSEQUENCE	        # Chama função PRINT-SEQUENCE
+      	
+	j VITORIA2
+
+.include "obstaculos.s"
+
+VITORIA2:
+	li a0, 500
+	li a7, 32
+	ecall				# Pausa o jogo
 	
-	li t2, 0xFF006A08
-	la a1, Acelerador1
-	li a4, 40			# Define largura da imagem
-	li a6, 24			# Define altura da imagem
-	call printUND
+	lw t1, PONTUAÇÃOMAX
+	lw t2, PONTUAÇÃO
+	blt t2, t1, derrotaCONT
+	la t3, PONTUAÇÃOMAX
+	sw t2, (t3)
 	
-	li t2, 0xFF00D948
-	la a1, Fuel
-	li a4, 24			# Define largura da imagem
-	li a6, 40			# Define altura da imagem
-	call printUND
+	la t1, PONTUAÇÃO
+	li t2, 0
+	sw t2, (t1)			# Zera a pontuação
 	
-	li t2, 0xFF011584
-	lw a1, CARROM
-	li a4, 8			# Define largura da imagem
+	la t1, CONTADORGASOLINA
+	li t3, 0x00000000
+	sw t3, (t1)
+	
+	la t1, POSIÇÃOCARROM
+	li t3, 0xFF011584
+	sw t3, (t1)
+	
+	lb t2, N2			# Desbloqueia o nível 2
+	bnez t2, continuaai
+	la t1, N2
+	lb t2, N2
+	xori t2, t2, 1
+	sb t2, (t1)
+	
+continuaai:
+	la t1,numVICTORY			
+	lw t2,0(t1)		
+	la t1,notasVICTORY		
+	li t0,0				# Inicia o contador
+	li a2,3 			# Instrumento
+	li a3,60			# Volume
+	
+	li a7, 30
+	ecall
+	add s1, a0, zero
+	add s2, a0, zero
+	li s4, 0
+looptocaVY2:
+	mv s11, t2
+	mv s9, t1
+	mv s8, t0
+	mv s7, a2
+	mv s6, a3
+	
+	li a7, 30
+	ecall
+	bge a0, s2, movecarroVY2
+	j looptocaVY2CONT
+movecarroVY2:
+	li t1, 0xFF000140
+	ble s10, t1, removeCARRO2
+	
+	add t2, s10, zero  		# Coloca valor armazenado em s10 em t2
+	add a3, t2, zero  		# Coloca valor armazenado em t2 em a3
+	la a1, TILE1
+	li a4, 16        		# Define largura da imagem
 	li a6, 16			# Define altura da imagem
-	call printUND
+	call printUND			# Remove rastro
 	
-	li t2, 0xFF002F3C
-	la a1, Pontos
-	li a4, 60
-	li a6, 12
-	call printUND
-	
-	la a1, Mapa4Og
-	li t2,0xFF00001C
-	li a4,216
-	li a6,240
-	call printUND
-	
+	li t1, -320
+	add s10, s10, t1
 	add t2, s10, zero  		# Coloca valor armazenado em s10 em t2
 	add a3, t2, zero  		# Coloca valor armazenado em t2 em a3
 	lw a1, CARRO
 	li a4, 16        		# Define largura da imagem
 	li a6, 16			# Define altura da imagem
-	call printUND
+	call printUND			# Move o carro
 	
-	li a7, 32
-	li a0, 5000
+	li a7, 30
+	addi s2, a0, 5		# Demarca velocidade de um pixel por segundo
+looptocaVY2CONT:	
+	beqz s4, looptocaVY2CONT2
+	li t2, 0xFF006330
+	la a1, Goal
+	li a4, 48
+	li a6, 16
+	call printUND			# Coloca imagem de checkpoint
+looptocaVY2CONT2:
+	mv t2, s11
+	mv t1, s9
+	mv t0, s8
+	mv a2, s7
+	mv a3, s6
+	
+	li a7, 30
 	ecall
+	bge a0, s1, tocaVY2
+	j looptocaVY2
+
+tocaVY2:beq t0,t2, fimVY2		# Termina se alcançar o n de notas
+	lw a0,0(t1)			# Coloca nota
+	lw a1,4(t1)			# Coloca duração	
+	li a7,31		
+	ecall			
+	addi t0,t0,1			
+	
+	mv t3, a1
+	li a7, 30
+	ecall
+	add s1, t3, a0			# Atualiza com a nova duração
+	
+	addi t1,t1,8			# Próx nota/num
+	j looptocaVY2			# Volta o loop
+	
+fimVY2:	li a0, 2000
+	li a7, 32
+	ecall				# Pausa o jogo
+	
+	la t1, UNLOCKED
+	li t2, 1
+	sb t2, (t1)			# Desbloqueia Lamar
 	
 	j MENU
 	
-	
+removeCARRO2:
+	add t2, s10, zero  		# Coloca valor armazenado em s10 em t2
+	add a3, t2, zero  		# Coloca valor armazenado em t2 em a3
+	la a1, TILE1
+	li a4, 16        		# Define largura da imagem
+	li a6, 16			# Define altura da imagem
+	call printUND			# Remove rastro
+	li s4, 1
+	j looptocaVY2CONT

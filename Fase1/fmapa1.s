@@ -10,7 +10,7 @@ moveCARRO:
 	li a4, 16	# Define largura da imagem
 	li a6, 16	# Define altura da imagem
 	call printUND
-	
+				
 	mv ra, a7
 	
 	#Printa p/ a direita quando aperta d/D
@@ -35,7 +35,7 @@ moveCARRO:
 	li t2, 119         # Código ASCII do w
 	beq t0, t2, moveCONT3
 	
-	j moveCONT2
+	j posMOVE
 moveCARROR:
 	li t2, 0xFF00FE6C
 	beq s10, t2, PRINT_EXIT
@@ -292,14 +292,14 @@ tocaNA:	beq t0,t2, fimNA		# Termina se alcançar o n de notas
 	addi t1,t1,8			# Próx nota/num
 	j tocaNA			# Volta o loop
 	
-fimNA:	li a0, 2000
+fimNA:	li a0, 1000
 	li a7, 32
 	ecall				# Pausa o jogo
 	
 	j MENU
 
 VITORIA1:
-	li a0, 1000
+	li a0, 500
 	li a7, 32
 	ecall				# Pausa o jogo
 	
