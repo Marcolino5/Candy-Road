@@ -64,6 +64,10 @@
 ### OBSTÁCULOS ###
 .include "Imagens/ColaE.s"
 .include "Imagens/Bola1.s"
+.include "Imagens/Bola2.s"
+.include "Imagens/Bola3.s"
+.include "Imagens/Bola4.s"
+.include "Imagens/Bola5.s"
 
 ### MISC ###
 .include "Imagens/Explosao1.s"
@@ -72,6 +76,7 @@
 
 TEMPOACELERADOR: .word 0x00000000
 PONTUAÇÃO: .word 0x00000000
+PONTUAÇÃO1: .word 0x00000000
 PONTUAÇÃOMAX: .word 0x00000000
 TEMPOGASOLINA: .word 0x00000000
 CONTADORGASOLINA: .word 0x00000000
@@ -87,12 +92,13 @@ PARTE: .word 0x00000000
 NLOOP: .word 0x00000000
 RAPRINT: .word 0x00000000
 
+BLOQUEADO: .byte 0
 JAPRINTOU: .byte 0
 JAPRINTOUAUX: .byte 0
 TEMPOEXPLOSAO: .word 0x00000000
 ENDEREÇO0: .word 0x00000000	# Endereço auxiliar
 ENDEREÇO1: .word 0xFF000918
-ENDEREÇO2: .word 0x00000000
+ENDEREÇO2: .word 0xFF00091C
 ENDEREÇO3: .word 0xFEFFE3EC
 
 .text
@@ -210,17 +216,17 @@ printSEQUENCE:
 	OBST1:
 		lw t3, PARTE
 		li t4, 2
-		bne t3, t4, OBST2		# Define parte onde será impresso
+		bne t3, t4, obst2PRE		# Define parte onde será impresso
 		lw t2, NLOOP
 		li t3, 24
-		bne t2, t3, OBST2		# Especifica parte onde será impresso
+		bne t2, t3, obst2PRE		# Especifica parte onde será impresso
 		
 		lw t2, NIMAGENS
 		li t3, 0
 		li t4, 8
 		
-		blt t2, t3, OBST2		# Define começo das impressões
-		bgt t2, t4, OBST2		# Define final das impressões
+		blt t2, t3, obst2PRE		# Define começo das impressões
+		bgt t2, t4, obst2PRE		# Define final das impressões
 		
 		lw t2, ENDEREÇO1		# Define endereço
 		la a1, ColaE		
@@ -232,43 +238,66 @@ printSEQUENCE:
 		la t1, ENDEREÇO1
 		sw t2, (t1)
 		
-		li t1, 0
-		lb t1, JAPRINTOU
-		bnez t1, OBST2				# Verifica se é a primeira vez
+		obst2PRE:
+			# Especificação do print #
+			lw t3, PARTE
+			li t4, 2
+			bne t3, t4, OBST3			# Define parte onde será impresso
+			lw t2, NLOOP
+			li t3, 24
+			bne t2, t3, OBST3			# Especifica parte onde será impresso
+			lw t2, NIMAGENS
+			li t3, 0
+			li t4, 8
+			blt t2, t3, OBST3			# Define começo das impressões
+			bgt t2, t4, OBST3			# Define final das impressões
 			
-		lw t2, ENDEREÇO3
-		li t4, 320
-		li t5, 30
-		mul t6, t4, t5
-		add t2, t2, t6
-		la t4, ENDEREÇO3
-		sw t2, (t4)				# Atualiza endereço
+			lb t1, JAPRINTOU
+			bnez t1, OBST3				# Verifica se é a primeira vez
 			
-		la t1, JAPRINTOU
-		li t2, 1
-		sb t2, (t1)				# Modifica JAPRINTOU para que não repita
-	OBST2:
+			lw t2, ENDEREÇO3
+			li t4, 320
+			li t5, 30
+			mul t6, t4, t5
+			add t2, t2, t6
+			la t4, ENDEREÇO3
+			sw t2, (t4)				# Atualiza endereço
+			
+			la t1, JAPRINTOU
+			li t2, 1
+			sb t2, (t1)				# Modifica JAPRINTOU para que não repita
+			OBST2:
+				lw t2, ENDEREÇO3		# Define endereço
+				la a1, Bola1
+				li a4, 16			# Define largura da imagem
+				li a6, 16			# Define altura da imagem
+				call printUND
+				lw t2, ENDEREÇO3		# Define endereço
+				call BOLAE			# Faz processos relacionados ao tipo de obstáculo
+	OBST3:
 		lw t3, PARTE
 		li t4, 2
-		bne t3, t4, moveCONT2		# Define parte onde será impresso
+		bne t3, t4, MOVE		# Define parte onde será impresso
 		lw t2, NLOOP
-		li t3, 24
-		bne t2, t3, moveCONT2		# Especifica parte onde será impresso
+		li t3, 16
+		bne t2, t3, MOVE		# Especifica parte onde será impresso
 		
 		lw t2, NIMAGENS
 		li t3, 0
 		li t4, 8
 		
-		blt t2, t3, moveCONT2		# Define começo das impressões
-		bgt t2, t4, moveCONT2		# Define final das impressões
-		lw t2, ENDEREÇO3		# Define endereço
-		la a1, Bola1		
+		blt t2, t3, MOVE		# Define começo das impressões
+		bgt t2, t4, MOVE		# Define final das impressões
+		
+		lw t2, ENDEREÇO2		# Define endereço
+		la a1, ColaE		
 		li a4, 16			# Define largura da imagem
 		li a6, 16			# Define altura da imagem
 		call printUND
-		lw t2, ENDEREÇO3		# Define endereço
-		call BOLAE			# Faz processos relacionados ao tipo de obstáculo	
-		
+		lw t2, ENDEREÇO2		# Define endereço
+		call GASOLINAE			# Faz processos relacionados ao tipo de obstáculo
+		la t1, ENDEREÇO2
+		sw t2, (t1)
 		# Gasolina, aceleração, etc
 	MOVE:
 		attGASOLINA:
@@ -287,10 +316,8 @@ printSEQUENCE:
 			
 		moveCONT1:
 			call moveCARRO
-			
 		# INCLUSÃO DOS OBSTÁCULOS AO MAPA
 		posMOVE:
-			
 		moveCONT2:
 			# Move verticalmente
 	   		li t4, 0xFF200000  		# Carrega endereço do KDMMIO
@@ -358,6 +385,10 @@ printSEQUENCE:
 			li t3, 40000
 			beq t1, t3, MOEDA4
 		moveCONT5:
+			lb t1, BLOQUEADO
+			beqz t1, moveCONT6
+			j MOVE
+		moveCONT6:
 			addi s11, s11, 1
 			la t1, NIMAGENS
 			lw t2, NIMAGENS
@@ -450,7 +481,6 @@ FASE2:
 	li t2, 8
 	sw t2, (t1)			# Define quantas imagens 320x240 de Mapa1 serão printadas
       	call printSEQUENCE	        # Chama função PRINT-SEQUENCE
-      	
 	j VITORIA2
 
 .include "obstaculos.s"
@@ -462,6 +492,8 @@ VITORIA2:
 	
 	lw t1, PONTUAÇÃOMAX
 	lw t2, PONTUAÇÃO
+	lw t4, PONTUAÇÃO1
+	add t2, t2, t4
 	blt t2, t1, derrotaCONT
 	la t3, PONTUAÇÃOMAX
 	sw t2, (t3)
@@ -469,6 +501,10 @@ VITORIA2:
 	la t1, PONTUAÇÃO
 	li t2, 0
 	sw t2, (t1)			# Zera a pontuação
+	
+	la t1, PONTUAÇÃO1
+	li t2, 0
+	sw t2, (t1)			# Reseta a pontuação
 	
 	la t1, CONTADORGASOLINA
 	li t3, 0x00000000

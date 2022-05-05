@@ -38,8 +38,64 @@ moveCARRO:
 	j posMOVE
 moveCARROR:
 	li t2, 0xFF00FE6C
-	beq s10, t2, PRINT_EXIT
+	beq s10, t2, moveCARROEXPLOSAO
+	j moveCARRORcont
+moveCARROEXPLOSAO:
+	li t3, 3
+	blt s11, t3, PRINT_EXIT
 	
+	la t1, TEMPOEXPLOSAO
+	sw a7, (t1)			# Guarda o endereço de retorno
+	
+	# Explosão
+	li a7, 31
+	li a0, 40
+	li a1, 1000
+	li a2, 127
+	li a3, 63
+	ecall				# Toca som de explosão
+	add t2, s10, zero
+	la a1, TILE1
+	li a4, 16
+	li a6, 16
+	call printUND
+	add t2, s10, zero
+	la a1, Explosao1
+	li a4, 16
+	li a6, 16
+	call printUND			# Printa 1 frame
+	li a7, 32
+	li a0, 200
+	ecall
+	add t2, s10, zero
+	la a1, Explosao2
+	li a4, 16
+	li a6, 16
+	call printUND			# Printa 2 frame
+	li a7, 32
+	li a0, 200
+	ecall
+	add t2, s10, zero
+	la a1, Explosao3
+	li a4, 16
+	li a6, 16
+	call printUND			# Printa 3 frame
+	li a7, 32
+	li a0, 500
+	ecall
+	add t2, s10, zero
+	la a1, TILE1
+	li a4, 16
+	li a6, 16
+	call printUND
+	li a7, 32
+	li a0, 500
+	ecall
+	li s10, 0xFF00FE28		# Retorna carro à posição inicial
+	
+	lw ra, TEMPOEXPLOSAO		# Coloca o valor anterior de a7 de volta em RA
+	ret
+moveCARRORcont:
 	add t2, s10, zero
 	la a1, TILE1
 	li a4, 16	# Define largura
@@ -53,8 +109,8 @@ moveCARROR:
 	j moveCARRO
 moveCARROL:
 	li t2, 0xFF00FE18
-	beq s10, t2, PRINT_EXIT
-
+	beq s10, t2, moveCARROEXPLOSAO
+moveCARROLcont:
 	add t2, s10, zero
 	la a1, TILE1
 	li a4, 16	# Define largura
@@ -256,6 +312,10 @@ DERROTA:
 	li t3, 0x00000000
 	sw t3, (t1)
 	
+	la t1, PONTUAÇÃO1
+	li t3, 0x00000000
+	sw t3, (t1)
+	
 	derrotaCONT:
 	la t1, POSIÇÃOCARROM
 	li t3, 0xFF011584
@@ -308,6 +368,14 @@ VITORIA1:
 	blt t2, t1, derrotaCONT
 	la t3, PONTUAÇÃOMAX
 	sw t2, (t3)
+	
+	la t1, PONTUAÇÃO
+	li t2, 0
+	sw t2, (t1)			# Reseta a pontuação
+	
+	la t1, PONTUAÇÃO1
+	lw t2, PONTUAÇÃO
+	sw t2, (t1)			# Guarda a pontuação em PONTUAÇÃO1
 	
 	la t1, CONTADORGASOLINA
 	li t3, 0x00000000

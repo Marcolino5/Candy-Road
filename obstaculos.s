@@ -1,9 +1,11 @@
 GASOLINAE:
 	mv t3, ra
-	addi t4, t2, 0
-	addi t5, t2, 4
+	
+	addi t6, t2, -4480		# Posição do carro
+	addi t4, t6, 0
+	addi t5, t6, 4
 	blt s10, t4, gasolinaeCONT
-	bgt s10, t5, gasolinaeCONT	# Verifica se foi pego pelo carro
+	bgt s10, t5, gasolinaeCONT	# Verifica se o carro pegou
 	
 	la t4, ENDEREÇO0
 	sw t2, (t4)			# Guarda posição da gasolina
@@ -59,13 +61,16 @@ gasolinaeCONT:
 BOLAE:
 	mv t3, ra
 	
-	li t4, 3
-	blt s11, t4, bolaeCONT		# Verifica a velocidade do carro
 	addi t6, t2, 5120		# Posição do carro
 	addi t4, t6, -12
 	addi t5, t6, 12
-	blt s10, t4, bolaeCONT
-	bgt s10, t5, bolaeCONT		# Verifica se o carro acertou
+	blt s10, t4, bolaeCONT2
+	bgt s10, t5, bolaeCONT2		# Verifica se o carro acertou
+	la t1, BLOQUEADO
+	li t4, 1
+	sb t4, (t1)			# Não permite que passe pela bola
+	li t4, 3
+	blt s11, t4, bolaeCONT		# Verifica a velocidade do carro
 	
 	la t4, ENDEREÇO0
 	sw t2, (t4)			# Guarda posição da bola
@@ -109,10 +114,15 @@ BOLAE:
 	li a7, 32
 	li a0, 1000
 	ecall
-	
-	li s10, 0xFF0106E8		# Retorna carro à posição inicial
+	li s10, 0xFF00FE28		# Retorna carro à posição inicial
 	
 	lw t2, ENDEREÇO0
 bolaeCONT:
+	mv ra, t3
+	ret
+bolaeCONT2:
+	la t1, BLOQUEADO
+	li t4, 0
+	sw t4, (t1)
 	mv ra, t3
 	ret
