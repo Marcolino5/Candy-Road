@@ -37,6 +37,7 @@
 .include "Musicas/Emotion.s"
 .include "Musicas/MusicaVitoria.s"
 .include "Musicas/Thousand.s"
+.include "Musicas/Champions.s"
 
 ### TILES ###
 .include "Imagens/TileM.s"
@@ -242,18 +243,18 @@ printSEQUENCE:
 			# Especificação do print #
 			lw t3, PARTE
 			li t4, 2
-			bne t3, t4, OBST3			# Define parte onde será impresso
+			bne t3, t4, MOVE			# Define parte onde será impresso
 			lw t2, NLOOP
 			li t3, 24
-			bne t2, t3, OBST3			# Especifica parte onde será impresso
+			bne t2, t3, MOVE			# Especifica parte onde será impresso
 			lw t2, NIMAGENS
 			li t3, 0
 			li t4, 8
-			blt t2, t3, OBST3			# Define começo das impressões
-			bgt t2, t4, OBST3			# Define final das impressões
+			blt t2, t3, MOVE			# Define começo das impressões
+			bgt t2, t4, MOVE			# Define final das impressões
 			
 			lb t1, JAPRINTOU
-			bnez t1, OBST3				# Verifica se é a primeira vez
+			bnez t1, OBST2				# Verifica se é a primeira vez
 			
 			lw t2, ENDEREÇO3
 			li t4, 320
@@ -274,30 +275,6 @@ printSEQUENCE:
 				call printUND
 				lw t2, ENDEREÇO3		# Define endereço
 				call BOLAE			# Faz processos relacionados ao tipo de obstáculo
-	OBST3:
-		lw t3, PARTE
-		li t4, 2
-		bne t3, t4, MOVE		# Define parte onde será impresso
-		lw t2, NLOOP
-		li t3, 16
-		bne t2, t3, MOVE		# Especifica parte onde será impresso
-		
-		lw t2, NIMAGENS
-		li t3, 0
-		li t4, 8
-		
-		blt t2, t3, MOVE		# Define começo das impressões
-		bgt t2, t4, MOVE		# Define final das impressões
-		
-		lw t2, ENDEREÇO2		# Define endereço
-		la a1, ColaE		
-		li a4, 16			# Define largura da imagem
-		li a6, 16			# Define altura da imagem
-		call printUND
-		lw t2, ENDEREÇO2		# Define endereço
-		call GASOLINAE			# Faz processos relacionados ao tipo de obstáculo
-		la t1, ENDEREÇO2
-		sw t2, (t1)
 		# Gasolina, aceleração, etc
 	MOVE:
 		attGASOLINA:
@@ -481,6 +458,7 @@ FASE2:
 	li t2, 8
 	sw t2, (t1)			# Define quantas imagens 320x240 de Mapa1 serão printadas
       	call printSEQUENCE	        # Chama função PRINT-SEQUENCE
+      	
 	j VITORIA2
 
 .include "obstaculos.s"
@@ -494,10 +472,10 @@ VITORIA2:
 	lw t2, PONTUAÇÃO
 	lw t4, PONTUAÇÃO1
 	add t2, t2, t4
-	blt t2, t1, derrotaCONT
+	blt t2, t1, vitoria2CONT
 	la t3, PONTUAÇÃOMAX
 	sw t2, (t3)
-	
+vitoria2CONT:
 	la t1, PONTUAÇÃO
 	li t2, 0
 	sw t2, (t1)			# Zera a pontuação
@@ -515,18 +493,18 @@ VITORIA2:
 	sw t3, (t1)
 	
 	lb t2, N2			# Desbloqueia o nível 2
-	bnez t2, continuaai
+	bnez t2, continuaai2
 	la t1, N2
 	lb t2, N2
 	xori t2, t2, 1
 	sb t2, (t1)
 	
-continuaai:
-	la t1,numVICTORY			
+continuaai2:
+	la t1,numCHAMPIONS			
 	lw t2,0(t1)		
-	la t1,notasVICTORY		
+	la t1,notasCHAMPIONS		
 	li t0,0				# Inicia o contador
-	li a2,3 			# Instrumento
+	li a2,25 			# Instrumento
 	li a3,60			# Volume
 	
 	li a7, 30

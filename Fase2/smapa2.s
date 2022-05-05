@@ -1,6 +1,9 @@
 	li s10, 0xFF00FE30       	# Define inicio p/ MoveCARRO - NÃO USAR REGISTRADOR EM OUTRAS PARTES
 	li s11, 0                       # Contador da aceleração - NÃO USAR REGISTRADOR EM OUTRAS PARTES
-	la s9, Fuel			# Define inicio p/ GASOLINA - NÃO USAR REGISTRADOR EM OUTRAS PARTES 
+	la s9, Fuel			# Define inicio p/ GASOLINA - NÃO USAR REGISTRADOR EM OUTRAS PARTES
+	la t1, CONTADORGASOLINA
+	li t3, 0x00000000
+	sw t3, (t1)			# GARANTE QUE COMEÇARÁ EM 0
 	
 	la a0, Mapa1Og		        # Carrega Mapa1
 	call PRINT                      # Chama a função PRINT

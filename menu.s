@@ -59,7 +59,7 @@ menuMUSICA:
 		j SETA # Se não tiver apertado, volta p/ SETA
 		
 	goMAPA2:li s11, 0xFF002E71
-		beq t0, a1, COURSE2
+		beq t0, a1, CHARACTERSELECTION2
 		
 		j SETA # Se não tiver apertado, volta p/ SETA
 	SETAU:  
@@ -325,3 +325,191 @@ course2CONT:
 	ecall
 	
 	j FASE2
+CHARACTERSELECTION2:
+	la a0, CharacterSelection
+	call PRINT
+	
+	lb t1, UNLOCKED 
+	beqz t1, ESCOLHA2
+	li t2, 0xFF00AAB9		# Define início na Frame 1
+	la a1, Lamar		
+	li a4, 72			# Define largura da imagem
+	li a6, 88			# Define altura da imagem
+	call printUND
+	ESCOLHA2:
+		beqz s7, playMUSICA3  # Se contador = 0, entra na música direto
+		li a7, 30	     
+		ecall		     # Chama syscall TIME
+		blt a0, s8, escolha2CONT # Compara os dois tempos
+		addi s0,s0,8	     # Se a0 >= s8, continua a tocar
+	playMUSICA3:
+		call tocamusicaCS
+	escolha2CONT:
+		add t2, s11, zero
+		la a1, Selected
+		li a4, 72			# Define largura da imagem
+		li a6, 88			# Define altura da imagem
+		call printUND
+	
+		li t5, 0xFF200000 # Carrega endereço do KDMMIO
+		lw t0, 4(t5)      # Lê código ASCII da tecla
+		sw t0, 12(t5)     # Põe no display
+		sw zero, 4(t5)    # Limpa o código ASCII
+	
+		li t1, 87         # Código ASCII do W
+		beq t1, t0, SELECTEDW2
+		li t1, 119	  # Código ASCII do w
+		beq t1, t0, SELECTEDW2
+	
+ 		li t1, 83         # Código ASCII do S
+ 		beq t1, t0, SELECTEDS2
+		li t1, 115        # Código ASCII do s
+		beq t1, t0, SELECTEDS2
+	
+		li t1, 65	  # Código ASCII do A
+		beq t1, t0, SELECTEDA2
+		li t1, 97	  # Código ASCII do a
+		beq t1, t0, SELECTEDA2
+	
+		li t1, 68	  # Código ASCII do D
+		beq t1, t0, SELECTEDD2
+		li t1, 100	  # Código ASCII do d
+		beq t1, t0, SELECTEDD2
+	
+		li t1, 32         # Código ASCII do espaço
+		beq t1, t0, SELECTEDSPACE2
+	
+		j ESCOLHA2
+		SELECTEDW2:
+			li t1, 0xFF002E71
+			beq t1, s11, ESCOLHA2
+			li t1, 0xFF002EF9
+			beq t1, s11, ESCOLHA2		# Limita a movimentação
+			
+			add t2, s11, zero
+			la a1, Unselected
+			li a4, 72			# Define largura da imagem
+			li a6, 88			# Define altura da imagem
+			call printUND			# Limpa rastro
+			
+	   		li t1, -31680
+	   		add s11, t1, s11
+	   		j ESCOLHA2
+		SELECTEDS2:
+			li t1, 0xFF00AA31
+			beq t1, s11, ESCOLHA2
+			li t1, 0xFF00AAB9
+			beq t1, s11, ESCOLHA2		# Limita a movimentação
+		
+			add t2, s11, zero
+			la a1, Unselected
+			li a4, 72			# Define largura da imagem
+			li a6, 88			# Define altura da imagem
+			call printUND			# Limpa rastro
+			
+			li t1, 31680
+			add s11, t1, s11
+			j ESCOLHA2	
+		SELECTEDA2:
+			li t1, 0xFF002E71
+			beq t1, s11, ESCOLHA2
+			li t1, 0xFF00AA31
+			beq t1, s11, ESCOLHA2		# Limita a movimentação
+			
+			add t2, s11, zero
+			la a1, Unselected
+			li a4, 72			# Define largura da imagem
+			li a6, 88			# Define altura da imagem
+			call printUND			# Limpa rastro
+			
+			addi s11, s11, -136
+			j ESCOLHA2
+		SELECTEDD2:
+			li t1, 0xFF002EF9
+			beq t1, s11, ESCOLHA2
+			li t1, 0xFF00AAB9
+			beq t1, s11, ESCOLHA2          # Limita a movimentação
+			
+			add t2, s11, zero
+			la a1, Unselected
+			li a4, 72			# Define largura da imagem
+			li a6, 88			# Define altura da imagem
+			call printUND			# Limpa rastro
+			
+			addi s11, s11, 136
+			j ESCOLHA2
+		SELECTEDSPACE2:
+			li t1, 0xFF002E71
+			beq s11, t1, VANELLOPE2		# Escolheu Vanellope
+			li t1, 0xFF002EF9
+			beq s11, t1, GLOYD2		# Escolheu Gloyd
+			li t1, 0xFF00AA31
+			beq s11, t1, SNOWANNA2		# Escolheu Snowanna
+			lb t1, UNLOCKED
+			beqz t1, ESCOLHA2
+			li t1, 0xFF00AAB9
+			beq s11, t1, LAMAR2		# Escolheu Lamar
+VANELLOPE2:
+	la t1, CARRO
+	la t2, CarroV0
+	sw t2, (t1)		# Coloca carro da Vanellope em CARRO
+	
+	la t1, CARROM
+	la t2, CarroVM
+	sw t2, (t1)		# Coloca carro da Vanellope na interface
+	
+	li a7, 31
+	li a0, 67
+	li a1, 1000
+	li a2, 3
+	li a3, 72
+	ecall		#Toca única nota
+	j COURSE2
+GLOYD2:
+	la t1, CARRO
+	la t2, CarroG0
+	sw t2, (t1)		# Coloca carro do Gloyd em CARRO
+	
+	la t1, CARROM
+	la t2, CarroGM
+	sw t2, (t1)		# Coloca carro do Gloyd na interface
+	
+	li a7, 31
+	li a0, 67
+	li a1, 1000
+	li a2, 3
+	li a3, 72
+	ecall		#Toca única nota
+	j COURSE2
+SNOWANNA2:
+	la t1, CARRO
+	la t2, CarroS0
+	sw t2, (t1)
+	
+	la t1, CARROM
+	la t2, CarroSM
+	sw t2, (t1)
+	
+	li a7, 31
+	li a0, 67
+	li a1, 1000
+	li a2, 3
+	li a3, 72
+	ecall		#Toca única nota
+	j COURSE2
+LAMAR2:
+	la t1, CARRO
+	la t2, CarroL0
+	sw t2, (t1)
+	
+	la t1, CARROM
+	la t2, CarroLM
+	sw t2, (t1)
+	
+	li a7, 31
+	li a0, 67
+	li a1, 1000
+	li a2, 3
+	li a3, 72
+	ecall		#Toca única nota
+	j COURSE2

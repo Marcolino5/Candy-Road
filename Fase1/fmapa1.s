@@ -365,17 +365,17 @@ VITORIA1:
 	
 	lw t1, PONTUAÇÃOMAX
 	lw t2, PONTUAÇÃO
-	blt t2, t1, derrotaCONT
+	blt t2, t1, vitoria1CONT
 	la t3, PONTUAÇÃOMAX
 	sw t2, (t3)
+vitoria1CONT:
+	la t1, PONTUAÇÃO1
+	lw t2, PONTUAÇÃO
+	sw t2, (t1)			# Guarda a pontuação em PONTUAÇÃO1
 	
 	la t1, PONTUAÇÃO
 	li t2, 0
 	sw t2, (t1)			# Reseta a pontuação
-	
-	la t1, PONTUAÇÃO1
-	lw t2, PONTUAÇÃO
-	sw t2, (t1)			# Guarda a pontuação em PONTUAÇÃO1
 	
 	la t1, CONTADORGASOLINA
 	li t3, 0x00000000
